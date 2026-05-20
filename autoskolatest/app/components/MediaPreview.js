@@ -12,7 +12,7 @@ export default function MediaPreview({ url, alt, className = "" }) {
   }
 
   const src = url.trim();
-  const classes = `max-h-80 w-full rounded-lg border border-gray-200 bg-gray-50 object-contain ${className}`;
+  const classes = `max-h-80 w-full rounded-lg border border-border bg-muted object-contain ${className}`;
 
   if (videoPattern.test(src)) {
     return (

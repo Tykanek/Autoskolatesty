@@ -1,93 +1,222 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { questionSchema, testResultSchema } from "./lib/questionSchema";
 import { supabase } from "./lib/supabase";
-import { z } from "zod";
 
-const QuestionSchema = z.object({
-  id: z.number().optional(),
-  question_text: z
-    .string()
-    .min(5, { message: "Text otázky musí mít alespoň 5 znaků." }),
-  points: z.coerce.number().min(1, { message: "Otázka musí mít alespoň 1 bod." }),
-  answers: z
-    .array(
-      z.object({
-        id: z.number().optional(),
-        answer_text: z.string().min(1, { message: "Odpověď nesmí být prázdná." }),
-        is_correct: z.boolean(),
-      })
-    )
-    .min(2, { message: "Musíte zadat alespoň dvě odpovědi." })
-    .refine((answers) => answers.filter((a) => a.is_correct).length === 1, {
-      message: "Přesně jedna odpověď musí být označena jako správná.",
-    }),
-});
+function firstValidationMessage(error) {
+  return error.issues[0]?.message || "Data nejsou platná.";
+}
 
-export async function saveQuestion(formData) {
-  const rawData = Object.fromEntries(formData);
-  
-  const parsedAnswers = JSON.parse(rawData.answers || "[]");
+function normalizeQuestionId(questionId) {
+  const id = Number(questionId);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
 
-  const validationResult = QuestionSchema.safeParse({
-    id: rawData.id ? parseInt(rawData.id, 10) : undefined,
-    question_text: rawData.question_text,
-    points: rawData.points,
-    answers: parsedAnswers,
-  });
+function splitQuestionPayload(question) {
+  const { answers, ...questionFields } = question;
 
-  if (!validationResult.success) {
-    return {
-      errors: validationResult.error.flatten().fieldErrors,
+  return {
+    questionFields,
+    answers,
+  };
+}
+
+function answerRows(questionId, answers, includeMediaUrl) {
+  return answers.map((answer) => {
+    const mediaUrl = answer.media_url || null;
+    const row = {
+      question_id: questionId,
+      answer_text: answer.answer_text || mediaUrl || "",
+      is_correct: answer.is_correct,
     };
+
+    if (includeMediaUrl) {
+      row.media_url = mediaUrl;
+    }
+
+    return row;
+  });
+}
+
+async function insertAnswers(questionId, answers) {
+  const hasMediaUrls = answers.some((answer) => Boolean(answer.media_url));
+  const initialRows = answerRows(questionId, answers, hasMediaUrls);
+
+  const { error } = await supabase.from("answers").insert(initialRows);
+
+  if (!error) {
+    return null;
   }
 
-  const { id, question_text, points, answers } = validationResult.data;
+  const missingMediaColumn =
+    hasMediaUrls &&
+    (error.code === "PGRST204" || error.message?.includes("media_url"));
 
-  // Save question
+  if (!missingMediaColumn) {
+    return error;
+  }
+
+  const fallbackRows = answerRows(questionId, answers, false);
+  const { error: fallbackError } = await supabase
+    .from("answers")
+    .insert(fallbackRows);
+
+  return fallbackError;
+}
+
+function revalidateQuestionPages(questionId) {
+  revalidatePath("/");
+  revalidatePath("/questions");
+  revalidatePath("/test");
+  revalidatePath(`/questions/${questionId}`);
+  revalidatePath(`/questions/${questionId}/edit`);
+}
+
+export async function createQuestion(input) {
+  const parsed = questionSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, error: firstValidationMessage(parsed.error) };
+  }
+
+  const { questionFields, answers } = splitQuestionPayload(parsed.data);
+
   const { data: savedQuestion, error: questionError } = await supabase
     .from("questions")
-    .upsert({ id, question_text, points })
-    .select()
+    .insert(questionFields)
+    .select("id")
     .single();
 
   if (questionError) {
-    return { errors: { _form: [questionError.message] } };
+    return { ok: false, error: questionError.message };
   }
 
-  // Prepare answers
-  const answersToUpsert = answers.map(a => ({ ...a, question_id: savedQuestion.id }));
-  
-  const { error: answersError } = await supabase
-    .from("answers")
-    .upsert(answersToUpsert);
+  const answersError = await insertAnswers(savedQuestion.id, answers);
 
   if (answersError) {
-    return { errors: { _form: [answersError.message] } };
+    await supabase.from("questions").delete().eq("id", savedQuestion.id);
+    return { ok: false, error: answersError.message };
   }
 
-  revalidatePath("/");
-  revalidatePath(`/questions/${savedQuestion.id}`);
-  
-  return { success: true, questionId: savedQuestion.id };
+  revalidateQuestionPages(savedQuestion.id);
+
+  return { ok: true, id: savedQuestion.id };
+}
+
+export async function updateQuestion(questionId, input) {
+  const id = normalizeQuestionId(questionId);
+
+  if (!id) {
+    return { ok: false, error: "ID otázky chybí nebo není platné." };
+  }
+
+  const parsed = questionSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, error: firstValidationMessage(parsed.error) };
+  }
+
+  const { questionFields, answers } = splitQuestionPayload(parsed.data);
+
+  const { error: questionError } = await supabase
+    .from("questions")
+    .update(questionFields)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (questionError) {
+    return { ok: false, error: questionError.message };
+  }
+
+  const { error: deleteAnswersError } = await supabase
+    .from("answers")
+    .delete()
+    .eq("question_id", id);
+
+  if (deleteAnswersError) {
+    return { ok: false, error: deleteAnswersError.message };
+  }
+
+  const answersError = await insertAnswers(id, answers);
+
+  if (answersError) {
+    return { ok: false, error: answersError.message };
+  }
+
+  revalidateQuestionPages(id);
+
+  return { ok: true, id };
+}
+
+export async function saveQuestion(formData) {
+  const rawData = Object.fromEntries(formData);
+  const id = normalizeQuestionId(rawData.id);
+  let answers;
+
+  try {
+    answers = JSON.parse(rawData.answers || "[]");
+  } catch {
+    return { ok: false, error: "Odpovědi nejsou ve správném formátu." };
+  }
+
+  const payload = {
+    question_text: rawData.question_text,
+    category: rawData.category,
+    points: rawData.points,
+    image_url: rawData.image_url,
+    answers,
+  };
+
+  return id ? updateQuestion(id, payload) : createQuestion(payload);
 }
 
 export async function deleteQuestion(questionId) {
-  if (!questionId) {
-    return { error: "ID otázky chybí." };
+  const id = normalizeQuestionId(questionId);
+
+  if (!id) {
+    return { ok: false, error: "ID otázky chybí nebo není platné." };
   }
 
-  const { error } = await supabase
-    .from("questions")
+  const { error: answersError } = await supabase
+    .from("answers")
     .delete()
-    .eq("id", questionId);
+    .eq("question_id", id);
+
+  if (answersError) {
+    return { ok: false, error: answersError.message };
+  }
+
+  const { error } = await supabase.from("questions").delete().eq("id", id);
 
   if (error) {
-    return { error: error.message };
+    return { ok: false, error: error.message };
   }
 
-  revalidatePath("/");
-  revalidatePath("/questions");
+  revalidateQuestionPages(id);
 
-  return { success: true };
+  return { ok: true, success: true };
+}
+
+export async function saveTestResult(input) {
+  const parsed = testResultSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, error: firstValidationMessage(parsed.error) };
+  }
+
+  const { data, error } = await supabase
+    .from("test_results")
+    .insert(parsed.data)
+    .select("id")
+    .single();
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/results");
+
+  return { ok: true, id: data.id };
 }

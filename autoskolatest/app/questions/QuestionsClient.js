@@ -1,94 +1,142 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import DeleteQuestionButton from "./DeleteQuestionButton";
 
+function shortText(value, length = 96) {
+  if (!value) {
+    return "Bez textu otázky";
+  }
+
+  return value.length > length ? `${value.slice(0, length)}...` : value;
+}
+
 export default function QuestionsClient({ questions }) {
-    const [search, setSearch] = useState("");
-    const [category, setCategory] = useState("vse");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("vse");
 
-    const categories = Array.from(
-        new Set(questions.map((question) => question.category))
-    );
+  const categories = useMemo(
+    () =>
+      Array.from(
+        new Set(questions.map((question) => question.category).filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b, "cs")),
+    [questions]
+  );
 
-    const filteredQuestions = questions.filter((question) => {
-        const matchesSearch = question.question_text
-            .toLowerCase()
-            .includes(search.toLowerCase());
+  const filteredQuestions = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
 
-        const matchesCategory =
-            category === "vse" || question.category === category;
+    return questions.filter((question) => {
+      const questionText = question.question_text || "";
+      const matchesSearch = questionText
+        .toLowerCase()
+        .includes(normalizedSearch);
 
-        return matchesSearch && matchesCategory;
+      const matchesCategory =
+        category === "vse" || question.category === category;
+
+      return matchesSearch && matchesCategory;
     });
+  }, [category, questions, search]);
 
-    return (
-        <div>
-            <div className="grid gap-4 p-6 sm:grid-cols-2">
-                <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Hledat v otázkách..."
-                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+  return (
+    <div>
+      <div className="grid gap-4 border-b border-border p-4 sm:grid-cols-[1fr_16rem]">
+        <label className="space-y-2">
+          <span className="block text-sm font-semibold text-foreground">
+            Hledání
+          </span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Hledat v otázkách..."
+            className="w-full rounded-lg border border-border bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
+          />
+        </label>
 
-                <select
-                    value={category}
-                    onChange={(event) => setCategory(event.target.value)}
-                    className="w-full rounded-lg border border-border bg-secondary px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                    <option value="vse">Všechny kategorie</option>
-                    {categories.map((categoryName) => (
-                        <option key={categoryName} value={categoryName}>
-                            {categoryName}
-                        </option>
-                    ))}
-                </select>
-            </div>
+        <label className="space-y-2">
+          <span className="block text-sm font-semibold text-foreground">
+            Kategorie
+          </span>
+          <select
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            className="w-full rounded-lg border border-border bg-white px-4 py-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+          >
+            <option value="vse">Všechny kategorie</option>
+            {categories.map((categoryName) => (
+              <option key={categoryName} value={categoryName}>
+                {categoryName}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-secondary/50">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Otázka</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Kategorie</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Body</th>
-                            <th scope="col" className="relative px-6 py-3"><span className="sr-only">Akce</span></th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {filteredQuestions.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                                    Žádné otázky neodpovídají zadaným kritériím.
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredQuestions.map((question) => (
-                                <tr key={question.id} className="transition-colors hover:bg-secondary/50">
-                                    <td className="px-6 py-4">
-                                        <Link href={`/questions/${question.id}`} className="font-medium text-foreground hover:text-indigo-400">
-                                            {question.question_text.substring(0, 80)}...
-                                        </Link>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-muted-foreground">{question.category}</td>
-                                    <td className="px-6 py-4 text-sm text-muted-foreground">{question.points}</td>
-                                    <td className="flex items-center justify-end gap-2 px-6 py-4 text-right text-sm font-medium">
-                                        <Link href={`/questions/${question.id}/edit`} className="rounded-md px-3 py-1 text-indigo-400 transition-colors hover:bg-indigo-500/10">
-                                            Upravit
-                                        </Link>
-                                        <DeleteQuestionButton questionId={question.id} />
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            <div className="border-t border-border px-6 py-3 text-xs text-muted-foreground">
-                Celkem otázek: {filteredQuestions.length}
-            </div>
-        </div>
-    );
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-border">
+          <thead className="bg-muted">
+            <tr>
+              <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                Otázka
+              </th>
+              <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                Kategorie
+              </th>
+              <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-foreground">
+                Body
+              </th>
+              <th scope="col" className="px-4 py-3 text-right text-sm font-semibold text-foreground">
+                Akce
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border bg-card">
+            {filteredQuestions.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
+                  Žádné otázky neodpovídají zadaným kritériím.
+                </td>
+              </tr>
+            ) : (
+              filteredQuestions.map((question) => (
+                <tr key={question.id} className="transition hover:bg-muted/70">
+                  <td className="max-w-xl px-4 py-4">
+                    <Link
+                      href={`/questions/${question.id}`}
+                      className="font-semibold text-foreground hover:text-primary"
+                    >
+                      {shortText(question.question_text)}
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                    {question.category || "Bez kategorie"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
+                    {question.points}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/questions/${question.id}/edit`}
+                        className="rounded-lg px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary-soft"
+                      >
+                        Upravit
+                      </Link>
+                      <DeleteQuestionButton questionId={question.id} />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="border-t border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+        Zobrazeno: {filteredQuestions.length} z {questions.length}
+      </div>
+    </div>
+  );
 }

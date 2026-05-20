@@ -18,11 +18,13 @@ export default function DeleteQuestionButton({ questionId }) {
         startTransition(async () => {
             const result = await deleteQuestion(questionId);
 
-            if (result?.error) {
-                alert("Chyba při mazání otázky: " + result.error);
+            if (!result?.ok) {
+                alert("Chyba při mazání otázky: " + result?.error);
             } else {
                 if (window.location.pathname.includes(`/questions/${questionId}`)) {
                     router.push("/questions");
+                } else {
+                    router.refresh();
                 }
             }
         });
@@ -30,9 +32,10 @@ export default function DeleteQuestionButton({ questionId }) {
 
     return (
         <button
+            type="button"
             onClick={handleDelete}
             disabled={isPending}
-            className="rounded-md px-3 py-1 text-red-500 transition-colors hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
             {isPending ? "Mažu..." : "Smazat"}
         </button>

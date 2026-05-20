@@ -2,51 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 222.2 84% 4.9%; /* Deep Blue/Black */
-    --foreground: 210 40% 98%; /* White */
-
-    --card: 222.2 47.4% 11.2%; /* Slightly lighter blue/black */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 210 40% 98%;
-
-    --radius: 0.5rem;
-  }
+:root {
+  --color-background: #f4f7fb;
+  --color-foreground: #172033;
+  --color-border: #d8e2ee;
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
-  }
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-background);
 }
 
 body {
-  font-family: var(--font-geist-sans), sans-serif;
+  min-height: 100%;
+  background:
+    linear-gradient(180deg, rgba(219, 234, 254, 0.7), rgba(244, 247, 251, 0) 18rem),
+    var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }

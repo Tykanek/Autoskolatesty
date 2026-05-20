@@ -7,11 +7,23 @@ const optionalText = z
   .nullable()
   .transform((value) => value || null);
 
-export const answerSchema = z.object({
-  answer_text: z.string().trim().min(1, "Odpověď nesmí být prázdná"),
-  media_url: optionalText,
-  is_correct: z.boolean(),
-});
+const answerText = z
+  .string()
+  .trim()
+  .optional()
+  .nullable()
+  .transform((value) => value || "");
+
+export const answerSchema = z
+  .object({
+    answer_text: answerText,
+    media_url: optionalText,
+    is_correct: z.boolean(),
+  })
+  .refine((answer) => Boolean(answer.answer_text || answer.media_url), {
+    message: "Odpověď musí mít text nebo URL média",
+    path: ["answer_text"],
+  });
 
 export const questionSchema = z
   .object({
@@ -58,7 +70,7 @@ export function normalizeQuestionInput(input) {
     data: {
       ...parsed.data,
       answers: parsed.data.answers.map((answer) => ({
-        answer_text: answer.answer_text,
+        answer_text: answer.answer_text || answer.media_url || "",
         media_url: answer.media_url,
         is_correct: answer.is_correct,
       })),

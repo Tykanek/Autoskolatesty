@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -7,13 +8,13 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { createQuestion, updateQuestion } from "../actions";
 import { questionSchema } from "../lib/questionSchema";
 
-const blankAnswer = { answer_text: "", media_url: null, is_correct: false };
+const blankAnswer = { answer_text: "", media_url: "", is_correct: false };
 
 function initialAnswers(question) {
   if (question?.answers?.length > 0) {
     return question.answers.map((answer) => ({
       answer_text: answer.answer_text || "",
-      media_url: answer.media_url || null,
+      media_url: answer.media_url || "",
       is_correct: Boolean(answer.is_correct),
     }));
   }
@@ -25,7 +26,15 @@ function initialAnswers(question) {
   ];
 }
 
-export default function QuestionForm({ mode, question }) {
+function FieldError({ message }) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="mt-1 text-sm text-red-700">{message}</p>;
+}
+
+export default function QuestionForm({ mode = "create", question }) {
   const router = useRouter();
   const answers = initialAnswers(question);
   const firstCorrect = answers.findIndex((answer) => answer.is_correct);
@@ -39,8 +48,9 @@ export default function QuestionForm({ mode, question }) {
     register,
     handleSubmit,
     setValue,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm({
+    resolver: zodResolver(questionSchema),
     defaultValues: {
       question_text: question?.question_text || "",
       category: question?.category || "",
@@ -58,8 +68,15 @@ export default function QuestionForm({ mode, question }) {
   const markCorrect = (index) => {
     setCorrectIndex(index);
     fields.forEach((_, fieldIndex) => {
-      setValue(`answers.${fieldIndex}.is_correct`, fieldIndex === index);
+      setValue(`answers.${fieldIndex}.is_correct`, fieldIndex === index, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     });
+  };
+
+  const addAnswer = () => {
+    append({ ...blankAnswer });
   };
 
   const removeAnswer = (index) => {
@@ -71,8 +88,14 @@ export default function QuestionForm({ mode, question }) {
 
     if (correctIndex === index) {
       setCorrectIndex(0);
-      setValue("answers.0.is_correct", true);
-    } else if (correctIndex > index) {
+      setValue("answers.0.is_correct", true, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    if (correctIndex > index) {
       setCorrectIndex(correctIndex - 1);
     }
   };
@@ -86,19 +109,12 @@ export default function QuestionForm({ mode, question }) {
       })),
     };
 
-    const parsed = questionSchema.safeParse(payload);
-
-    if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message || "Formulář není platný.");
-      return;
-    }
-
     setFormError("");
 
     const result =
       mode === "edit"
-        ? await updateQuestion(question.id, parsed.data)
-        : await createQuestion(parsed.data);
+        ? await updateQuestion(question.id, payload)
+        : await createQuestion(payload);
 
     if (!result.ok) {
       setFormError(result.error);
@@ -112,106 +128,144 @@ export default function QuestionForm({ mode, question }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {formError && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {formError}
         </div>
       )}
 
-      <div>
-        <label className="mb-1 block font-medium text-black">Text otázky</label>
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-foreground">
+          Text otázky
+        </label>
         <textarea
           {...register("question_text")}
-          className="w-full rounded-xl border border-gray-300 p-3 text-black"
-          rows="4"
+          className="min-h-32 w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           placeholder="Např. Co znamená tato dopravní značka?"
         />
+        <FieldError message={errors.question_text?.message} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block font-medium text-black">Kategorie</label>
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-foreground">
+            Kategorie
+          </label>
           <input
             {...register("category")}
-            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
             placeholder="Např. Dopravní značky"
           />
+          <FieldError message={errors.category?.message} />
         </div>
 
-        <div>
-          <label className="mb-1 block font-medium text-black">Počet bodů</label>
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-foreground">
+            Počet bodů
+          </label>
           <input
             type="number"
             min="1"
             {...register("points")}
-            className="w-full rounded-xl border border-gray-300 p-3 text-black"
+            className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
+          <FieldError message={errors.points?.message} />
         </div>
       </div>
 
-      <div>
-        <label className="mb-1 block font-medium text-black">
-          URL obrázku nebo videa
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-foreground">
+          URL obrázku nebo videa k otázce
         </label>
         <input
           {...register("image_url")}
-          className="w-full rounded-xl border border-gray-300 p-3 text-black"
+          className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           placeholder="Nepovinné"
         />
+        <FieldError message={errors.image_url?.message} />
       </div>
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-black">Odpovědi</h2>
+        <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Odpovědi</h2>
+            <p className="text-sm text-muted-foreground">
+              Označte právě jednu správnou odpověď.
+            </p>
+          </div>
           <button
             type="button"
-            onClick={() => append({ ...blankAnswer })}
-            className="rounded-lg border border-gray-400 px-3 py-2 text-black hover:bg-gray-100"
+            onClick={addAnswer}
+            className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted"
           >
             Přidat odpověď
           </button>
         </div>
 
-        {fields.map((field, index) => (
-          <div
-            key={field.id}
-            className="rounded-xl border border-gray-300 bg-white p-4"
-          >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <label className="flex items-center gap-2 font-medium text-black">
-                <input
-                  type="radio"
-                  name="correct-answer"
-                  checked={correctIndex === index}
-                  onChange={() => markCorrect(index)}
-                />
-                Správná odpověď
-              </label>
+        <FieldError message={errors.answers?.message} />
 
-              <button
-                type="button"
-                onClick={() => removeAnswer(index)}
-                disabled={fields.length <= 2}
-                className="rounded-lg border border-red-300 px-3 py-2 text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Odebrat
-              </button>
+        <div className="space-y-3">
+          {fields.map((field, index) => (
+            <div
+              key={field.id}
+              className="rounded-lg border border-border bg-white p-4 shadow-sm"
+            >
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <input
+                    type="radio"
+                    name="correct-answer"
+                    checked={correctIndex === index}
+                    onChange={() => markCorrect(index)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  Správná odpověď
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => removeAnswer(index)}
+                  disabled={fields.length <= 2}
+                  className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Odebrat
+                </button>
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    Text odpovědi
+                  </label>
+                  <textarea
+                    {...register(`answers.${index}.answer_text`)}
+                    className="min-h-24 w-full rounded-lg border border-border bg-white p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    placeholder={`Odpověď ${index + 1}`}
+                  />
+                  <FieldError message={errors.answers?.[index]?.answer_text?.message} />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-foreground">
+                    URL média odpovědi
+                  </label>
+                  <input
+                    {...register(`answers.${index}.media_url`)}
+                    className="w-full rounded-lg border border-border bg-white p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    placeholder="Nepovinné"
+                  />
+                  <FieldError message={errors.answers?.[index]?.media_url?.message} />
+                </div>
+              </div>
             </div>
-
-            <textarea
-              {...register(`answers.${index}.answer_text`)}
-              className="w-full rounded-lg border border-gray-300 p-3 text-black"
-              rows="3"
-              placeholder="Text odpovědi nebo URL obrázku/videa"
-            />
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-xl bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
             ? "Ukládám..."
@@ -222,7 +276,7 @@ export default function QuestionForm({ mode, question }) {
 
         <Link
           href={mode === "edit" && question ? `/questions/${question.id}` : "/questions"}
-          className="rounded-xl border border-black px-5 py-3 text-center text-black"
+          className="rounded-lg border border-border bg-white px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
         >
           Zpět
         </Link>
