@@ -31,7 +31,7 @@ function FieldError({ message }) {
     return null;
   }
 
-  return <p className="mt-1 text-sm text-red-700">{message}</p>;
+  return <p className="mt-1 text-sm text-destructive">{message}</p>;
 }
 
 export default function QuestionForm({ mode = "create", question }) {
@@ -56,6 +56,7 @@ export default function QuestionForm({ mode = "create", question }) {
       category: question?.category || "",
       points: question?.points || 1,
       image_url: question?.image_url || "",
+      explanation: question?.explanation || "",
       answers,
     },
   });
@@ -128,7 +129,7 @@ export default function QuestionForm({ mode = "create", question }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {formError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="rounded-lg border border-destructive bg-destructive-soft p-3 text-sm text-destructive">
           {formError}
         </div>
       )}
@@ -139,7 +140,7 @@ export default function QuestionForm({ mode = "create", question }) {
         </label>
         <textarea
           {...register("question_text")}
-          className="min-h-32 w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="min-h-32 w-full rounded-lg border border-border bg-card p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           placeholder="Např. Co znamená tato dopravní značka?"
         />
         <FieldError message={errors.question_text?.message} />
@@ -152,7 +153,7 @@ export default function QuestionForm({ mode = "create", question }) {
           </label>
           <input
             {...register("category")}
-            className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full rounded-lg border border-border bg-card p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
             placeholder="Např. Dopravní značky"
           />
           <FieldError message={errors.category?.message} />
@@ -166,7 +167,7 @@ export default function QuestionForm({ mode = "create", question }) {
             type="number"
             min="1"
             {...register("points")}
-            className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full rounded-lg border border-border bg-card p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
           <FieldError message={errors.points?.message} />
         </div>
@@ -178,10 +179,22 @@ export default function QuestionForm({ mode = "create", question }) {
         </label>
         <input
           {...register("image_url")}
-          className="w-full rounded-lg border border-border bg-white p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+          className="w-full rounded-lg border border-border bg-card p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           placeholder="Nepovinné"
         />
         <FieldError message={errors.image_url?.message} />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-semibold text-foreground">
+          Vysvětlení správné odpovědi
+        </label>
+        <textarea
+          {...register("explanation")}
+          className="min-h-24 w-full rounded-lg border border-border bg-card p-3 text-foreground shadow-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+          placeholder="Nepovinné vysvětlení, které se zobrazí v revizi testu."
+        />
+        <FieldError message={errors.explanation?.message} />
       </div>
 
       <section className="space-y-3">
@@ -195,7 +208,7 @@ export default function QuestionForm({ mode = "create", question }) {
           <button
             type="button"
             onClick={addAnswer}
-            className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted"
           >
             Přidat odpověď
           </button>
@@ -207,7 +220,7 @@ export default function QuestionForm({ mode = "create", question }) {
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="rounded-lg border border-border bg-white p-4 shadow-sm"
+              className="rounded-lg border border-border bg-card p-4 shadow-sm"
             >
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -225,7 +238,7 @@ export default function QuestionForm({ mode = "create", question }) {
                   type="button"
                   onClick={() => removeAnswer(index)}
                   disabled={fields.length <= 2}
-                  className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-lg border border-destructive px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive-soft disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Odebrat
                 </button>
@@ -238,7 +251,7 @@ export default function QuestionForm({ mode = "create", question }) {
                   </label>
                   <textarea
                     {...register(`answers.${index}.answer_text`)}
-                    className="min-h-24 w-full rounded-lg border border-border bg-white p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="min-h-24 w-full rounded-lg border border-border bg-card p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                     placeholder={`Odpověď ${index + 1}`}
                   />
                   <FieldError message={errors.answers?.[index]?.answer_text?.message} />
@@ -250,7 +263,7 @@ export default function QuestionForm({ mode = "create", question }) {
                   </label>
                   <input
                     {...register(`answers.${index}.media_url`)}
-                    className="w-full rounded-lg border border-border bg-white p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+                    className="w-full rounded-lg border border-border bg-card p-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                     placeholder="Nepovinné"
                   />
                   <FieldError message={errors.answers?.[index]?.media_url?.message} />
@@ -276,7 +289,7 @@ export default function QuestionForm({ mode = "create", question }) {
 
         <Link
           href={mode === "edit" && question ? `/questions/${question.id}` : "/questions"}
-          className="rounded-lg border border-border bg-white px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
+          className="rounded-lg border border-border bg-card px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
         >
           Zpět
         </Link>

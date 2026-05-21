@@ -35,7 +35,7 @@ export default function DeleteQuestionButton({ questionId }) {
             type="button"
             onClick={handleDelete}
             disabled={isPending}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
             {isPending ? "Mažu..." : "Smazat"}
         </button>

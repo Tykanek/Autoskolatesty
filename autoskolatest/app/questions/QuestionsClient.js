@@ -51,7 +51,7 @@ export default function QuestionsClient({ questions }) {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Hledat v otázkách..."
-            className="w-full rounded-lg border border-border bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
           />
         </label>
 
@@ -62,7 +62,7 @@ export default function QuestionsClient({ questions }) {
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            className="w-full rounded-lg border border-border bg-white px-4 py-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+            className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
           >
             <option value="vse">Všechny kategorie</option>
             {categories.map((categoryName) => (

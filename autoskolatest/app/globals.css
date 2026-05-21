@@ -3,9 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --color-background: #f4f7fb;
-  --color-foreground: #172033;
-  --color-border: #d8e2ee;
+  --color-background: 244 247 251;
+  --color-foreground: 23 32 51;
+  --color-muted: 238 243 248;
+  --color-muted-foreground: 98 113 138;
+  --color-card: 255 255 255;
+  --color-card-foreground: 23 32 51;
+  --color-border: 216 226 238;
+  --color-input: 216 226 238;
+  --color-primary: 37 99 235;
+  --color-primary-strong: 29 78 216;
+  --color-primary-soft: 219 234 254;
+  --color-accent: 15 118 110;
+  --color-accent-soft: 204 251 241;
+  --color-warning: 180 83 9;
+  --color-warning-soft: 254 243 199;
+  --color-destructive: 185 28 28;
+  --color-destructive-soft: 254 226 226;
+  --color-page-gradient: 219 234 254;
+}
+
+.dark {
+  --color-background: 15 23 42;
+  --color-foreground: 226 232 240;
+  --color-muted: 30 41 59;
+  --color-muted-foreground: 148 163 184;
+  --color-card: 17 24 39;
+  --color-card-foreground: 226 232 240;
+  --color-border: 51 65 85;
+  --color-input: 71 85 105;
+  --color-primary: 96 165 250;
+  --color-primary-strong: 59 130 246;
+  --color-primary-soft: 30 58 138;
+  --color-accent: 45 212 191;
+  --color-accent-soft: 19 78 74;
+  --color-warning: 251 191 36;
+  --color-warning-soft: 69 26 3;
+  --color-destructive: 248 113 113;
+  --color-destructive-soft: 69 10 10;
+  --color-page-gradient: 30 41 59;
 }
 
 * {
@@ -14,16 +50,16 @@
 
 html {
   min-height: 100%;
-  background: var(--color-background);
+  background: rgb(var(--color-background));
 }
 
 body {
   min-height: 100%;
   background:
-    linear-gradient(180deg, rgba(219, 234, 254, 0.7), rgba(244, 247, 251, 0) 18rem),
-    var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+    linear-gradient(180deg, rgb(var(--color-page-gradient) / 0.7), rgb(var(--color-background) / 0) 18rem),
+    rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  font-family: inherit;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   letter-spacing: 0;
 }

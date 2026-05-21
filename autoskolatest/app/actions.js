@@ -22,6 +22,60 @@ function splitQuestionPayload(question) {
   };
 }
 
+function omitField(payload, fieldName) {
+  const { [fieldName]: _removed, ...rest } = payload;
+  return rest;
+}
+
+function isMissingColumnError(error, columnName) {
+  const message = error?.message || "";
+
+  return (
+    error?.code === "PGRST204" ||
+    message.includes(columnName) ||
+    message.includes("schema cache") ||
+    message.includes("column")
+  );
+}
+
+async function insertQuestion(questionFields) {
+  const { data, error } = await supabase
+    .from("questions")
+    .insert(questionFields)
+    .select("id")
+    .single();
+
+  if (!error || !isMissingColumnError(error, "explanation")) {
+    return { data, error };
+  }
+
+  return supabase
+    .from("questions")
+    .insert(omitField(questionFields, "explanation"))
+    .select("id")
+    .single();
+}
+
+async function updateQuestionRecord(id, questionFields) {
+  const { data, error } = await supabase
+    .from("questions")
+    .update(questionFields)
+    .eq("id", id)
+    .select("id")
+    .single();
+
+  if (!error || !isMissingColumnError(error, "explanation")) {
+    return { data, error };
+  }
+
+  return supabase
+    .from("questions")
+    .update(omitField(questionFields, "explanation"))
+    .eq("id", id)
+    .select("id")
+    .single();
+}
+
 function answerRows(questionId, answers, includeMediaUrl) {
   return answers.map((answer) => {
     const mediaUrl = answer.media_url || null;
@@ -73,6 +127,39 @@ function revalidateQuestionPages(questionId) {
   revalidatePath(`/questions/${questionId}/edit`);
 }
 
+async function verifiedUser(accessToken) {
+  if (!accessToken) {
+    return null;
+  }
+
+  const { data, error } = await supabase.auth.getUser(accessToken);
+
+  if (error) {
+    return null;
+  }
+
+  return data.user || null;
+}
+
+function fallbackResultRow(data, user) {
+  return {
+    user_name: user?.email || data.user_name || "Student",
+    score: data.score,
+    total_points: data.total_points,
+  };
+}
+
+function extendedResultRow(data, user) {
+  return {
+    ...fallbackResultRow(data, user),
+    user_id: user?.id || null,
+    total_questions: data.total_questions,
+    correct_questions: data.correct_questions,
+    duration_seconds: data.duration_seconds,
+    answers: data.answers,
+  };
+}
+
 export async function createQuestion(input) {
   const parsed = questionSchema.safeParse(input);
 
@@ -82,11 +169,8 @@ export async function createQuestion(input) {
 
   const { questionFields, answers } = splitQuestionPayload(parsed.data);
 
-  const { data: savedQuestion, error: questionError } = await supabase
-    .from("questions")
-    .insert(questionFields)
-    .select("id")
-    .single();
+  const { data: savedQuestion, error: questionError } =
+    await insertQuestion(questionFields);
 
   if (questionError) {
     return { ok: false, error: questionError.message };
@@ -119,12 +203,10 @@ export async function updateQuestion(questionId, input) {
 
   const { questionFields, answers } = splitQuestionPayload(parsed.data);
 
-  const { error: questionError } = await supabase
-    .from("questions")
-    .update(questionFields)
-    .eq("id", id)
-    .select("id")
-    .single();
+  const { error: questionError } = await updateQuestionRecord(
+    id,
+    questionFields
+  );
 
   if (questionError) {
     return { ok: false, error: questionError.message };
@@ -166,6 +248,7 @@ export async function saveQuestion(formData) {
     category: rawData.category,
     points: rawData.points,
     image_url: rawData.image_url,
+    explanation: rawData.explanation,
     answers,
   };
 
@@ -206,11 +289,31 @@ export async function saveTestResult(input) {
     return { ok: false, error: firstValidationMessage(parsed.error) };
   }
 
+  const user = await verifiedUser(parsed.data.access_token);
+  const row = extendedResultRow(parsed.data, user);
+
   const { data, error } = await supabase
     .from("test_results")
-    .insert(parsed.data)
+    .insert(row)
     .select("id")
     .single();
+
+  if (error && isMissingColumnError(error, "test_results")) {
+    const fallbackRow = fallbackResultRow(parsed.data, user);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("test_results")
+      .insert(fallbackRow)
+      .select("id")
+      .single();
+
+    if (fallbackError) {
+      return { ok: false, error: fallbackError.message };
+    }
+
+    revalidatePath("/results");
+
+    return { ok: true, id: fallbackData.id, storedReview: false };
+  }
 
   if (error) {
     return { ok: false, error: error.message };
@@ -218,5 +321,48 @@ export async function saveTestResult(input) {
 
   revalidatePath("/results");
 
-  return { ok: true, id: data.id };
+  return { ok: true, id: data.id, storedReview: true };
+}
+
+export async function getUserTestHistory(input = {}) {
+  const user = await verifiedUser(input.access_token);
+
+  if (!user) {
+    return {
+      ok: false,
+      error: "Pro osobní historii se nejdříve přihlaste.",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("test_results")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (!error) {
+    return { ok: true, results: data || [] };
+  }
+
+  if (!isMissingColumnError(error, "user_id")) {
+    return { ok: false, error: error.message };
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("test_results")
+    .select("*")
+    .eq("user_name", user.email)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (fallbackError) {
+    return { ok: false, error: fallbackError.message };
+  }
+
+  return {
+    ok: true,
+    results: fallbackData || [],
+    storedReview: false,
+  };
 }

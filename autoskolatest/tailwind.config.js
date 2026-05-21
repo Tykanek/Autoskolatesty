@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   content: [
     "./app/**/*.{js,jsx,ts,tsx,mdx}",
     "./components/**/*.{js,jsx,ts,tsx,mdx}",
@@ -7,23 +8,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#f4f7fb",
-        foreground: "#172033",
-        muted: "#eef3f8",
-        "muted-foreground": "#62718a",
-        card: "#ffffff",
-        "card-foreground": "#172033",
-        border: "#d8e2ee",
-        input: "#d8e2ee",
-        primary: "#2563eb",
-        "primary-strong": "#1d4ed8",
-        "primary-soft": "#dbeafe",
-        accent: "#0f766e",
-        "accent-soft": "#ccfbf1",
-        warning: "#b45309",
-        "warning-soft": "#fef3c7",
-        destructive: "#b91c1c",
-        "destructive-soft": "#fee2e2",
+        background: "rgb(var(--color-background) / <alpha-value>)",
+        foreground: "rgb(var(--color-foreground) / <alpha-value>)",
+        muted: "rgb(var(--color-muted) / <alpha-value>)",
+        "muted-foreground":
+          "rgb(var(--color-muted-foreground) / <alpha-value>)",
+        card: "rgb(var(--color-card) / <alpha-value>)",
+        "card-foreground":
+          "rgb(var(--color-card-foreground) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+        input: "rgb(var(--color-input) / <alpha-value>)",
+        primary: "rgb(var(--color-primary) / <alpha-value>)",
+        "primary-strong": "rgb(var(--color-primary-strong) / <alpha-value>)",
+        "primary-soft": "rgb(var(--color-primary-soft) / <alpha-value>)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
+        "accent-soft": "rgb(var(--color-accent-soft) / <alpha-value>)",
+        warning: "rgb(var(--color-warning) / <alpha-value>)",
+        "warning-soft": "rgb(var(--color-warning-soft) / <alpha-value>)",
+        destructive: "rgb(var(--color-destructive) / <alpha-value>)",
+        "destructive-soft":
+          "rgb(var(--color-destructive-soft) / <alpha-value>)",
       },
       borderRadius: {
         lg: "0.5rem",

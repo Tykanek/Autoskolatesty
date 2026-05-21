@@ -16,10 +16,10 @@ export default async function TestPage() {
   if (error) {
     return (
       <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-lg border border-red-200 bg-red-50 p-5 text-red-800">
+        <div className="mx-auto max-w-5xl rounded-lg border border-destructive bg-destructive-soft p-5 text-destructive">
           <h1 className="text-2xl font-bold">Chyba při načítání testu</h1>
           <p className="mt-3 text-sm">{error.message}</p>
-          <Link href="/" className="mt-5 inline-flex font-semibold text-red-900 underline">
+          <Link href="/" className="mt-5 inline-flex font-semibold underline">
             Zpět na přehled
           </Link>
         </div>

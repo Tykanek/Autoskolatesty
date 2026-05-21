@@ -15,7 +15,7 @@ function AnswerContent({ answer, index }) {
       className={`rounded-lg border p-4 ${
         answer.is_correct
           ? "border-accent bg-accent-soft"
-          : "border-border bg-white"
+          : "border-border bg-card"
       }`}
     >
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -23,7 +23,7 @@ function AnswerContent({ answer, index }) {
           Odpověď {index + 1}
         </span>
         {answer.is_correct && (
-          <span className="w-fit rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-accent">
+          <span className="w-fit rounded-lg bg-card px-2.5 py-1 text-xs font-semibold text-accent">
             Správná
           </span>
         )}
@@ -75,7 +75,7 @@ export default async function QuestionDetailPage({ params }) {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Link
                 href={`/questions/${question.id}/edit`}
-                className="rounded-lg border border-border bg-white px-4 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
+                className="rounded-lg border border-border bg-card px-4 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
               >
                 Upravit
               </Link>
@@ -95,6 +95,12 @@ export default async function QuestionDetailPage({ params }) {
 
         <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xl font-semibold text-foreground">Odpovědi</h2>
+          {question.explanation && (
+            <div className="mt-4 rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">Vysvětlení</p>
+              <p className="mt-2">{question.explanation}</p>
+            </div>
+          )}
           {question.answers?.length > 0 ? (
             <ul className="mt-4 space-y-3">
               {question.answers.map((answer, index) => (

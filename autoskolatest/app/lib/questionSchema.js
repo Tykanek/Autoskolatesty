@@ -37,6 +37,7 @@ export const questionSchema = z
       .int("Počet bodů musí být celé číslo")
       .min(1, "Počet bodů musí být alespoň 1"),
     image_url: optionalText,
+    explanation: optionalText,
     answers: z
       .array(answerSchema)
       .min(2, "Otázka musí mít alespoň dvě odpovědi"),
@@ -50,9 +51,14 @@ export const questionSchema = z
   );
 
 export const testResultSchema = z.object({
+  access_token: z.string().optional(),
   user_name: z.string().trim().min(1).default("Student"),
   score: z.coerce.number().int().min(0),
   total_points: z.coerce.number().int().min(0),
+  total_questions: z.coerce.number().int().min(0).default(0),
+  correct_questions: z.coerce.number().int().min(0).default(0),
+  duration_seconds: z.coerce.number().int().min(0).default(0),
+  answers: z.array(z.record(z.any())).default([]),
 });
 
 export function normalizeQuestionInput(input) {
