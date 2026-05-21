@@ -8,6 +8,7 @@ export default async function QuestionsPage() {
   const { data: questions, error } = await supabase
     .from("questions")
     .select("*")
+    .limit(2000)
     .order("created_at", { ascending: false });
 
   if (error) {

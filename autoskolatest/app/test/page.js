@@ -11,7 +11,8 @@ function shuffleQuestions(questions) {
 export default async function TestPage() {
   const { data: questions, error } = await supabase
     .from("questions")
-    .select("*, answers(*)");
+    .select("*, answers(*)")
+    .limit(2000);
 
   if (error) {
     return (

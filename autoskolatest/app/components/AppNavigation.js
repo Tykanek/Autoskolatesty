@@ -52,7 +52,7 @@ export default function AppNavigation() {
           ) : user ? (
             <>
               <span className="max-w-48 truncate rounded-lg border border-border bg-muted px-3 py-2 text-sm font-semibold text-foreground">
-                {user.email}
+                {user.user_metadata?.full_name || user.email}
               </span>
               <button
                 type="button"
