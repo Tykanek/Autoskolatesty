@@ -15,6 +15,8 @@ TOPICS = {
     7: "Zdravotnická příprava",
 }
 
+EXPECTED_GROUP_B_QUESTION_COUNT = 1114
+
 
 def build_answer(text, media_url, is_correct):
     text = (text or "").strip()
@@ -49,6 +51,10 @@ for topic_id, category in TOPICS.items():
             question_id = question.get("question_id")
 
             if not question_id or question_id in used_ids:
+                continue
+
+            if not etesty.is_group_b_question_id(question_id):
+                print(f"Přeskakuji otázku mimo sadu B: {question_id}")
                 continue
 
             used_ids.add(question_id)
@@ -99,8 +105,13 @@ for topic_id, category in TOPICS.items():
         except Exception as error:
             print(f"Chyba u otázky: {error}")
 
+print(f"Hotovo. Celkem exportováno: {len(all_questions)} otázek")
+if len(all_questions) != EXPECTED_GROUP_B_QUESTION_COUNT:
+    raise RuntimeError(
+        f"Export neobsahuje očekávaných {EXPECTED_GROUP_B_QUESTION_COUNT} otázek pro skupinu B, ale {len(all_questions)}."
+    )
+
 with open("questions_export.json", "w", encoding="utf-8") as file:
     json.dump(all_questions, file, ensure_ascii=False, indent=2)
 
-print(f"Hotovo. Celkem exportováno: {len(all_questions)} otázek")
 print("Soubor: questions_export.json")

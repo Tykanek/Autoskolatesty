@@ -7,6 +7,17 @@ from urllib.parse import urljoin
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
 BASE_URL = "https://www.autoskola-testy.cz"
+GROUP_B_QUESTION_ID_PATTERN = re.compile(r"^\d{8}$")
+
+
+def is_group_b_question_id(question_id: str) -> bool:
+    """
+    Standard questions used by the group B import have 8-digit official codes.
+    Short 6-digit codes are from separate "new questions" pages and must not be
+    mixed into the group B dataset.
+    """
+
+    return bool(GROUP_B_QUESTION_ID_PATTERN.fullmatch(str(question_id or "").strip()))
 
 
 def _absolute_media_url(value: str) -> str:
@@ -149,12 +160,18 @@ def get_questions_urls(questions_topic_id: int) -> list[tuple]:
         ]
 
     for question_id, link in question_links:
+        if not is_group_b_question_id(question_id):
+            continue
+
         link = link.replace("&amp;", "&")
 
         if link.startswith("?"):
             full_url = urljoin(BASE_URL, "prohlizeni_otazek.php" + link)
         else:
             full_url = urljoin(BASE_URL + "/", link)
+
+        if "prohlizeni_otazek.php?otazka=" not in full_url:
+            continue
 
         if full_url in used_urls:
             continue

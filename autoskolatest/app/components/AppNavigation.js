@@ -19,19 +19,19 @@ export default function AppNavigation() {
             href="/test"
             className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
-            Test
-          </Link>
-          <Link
-            href="/results"
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
-          >
-            Historie
+            Spustit test
           </Link>
           <Link
             href="/questions"
             className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
-            Otázky
+            Správa otázek
+          </Link>
+          <Link
+            href="/results"
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          >
+            Výsledky
           </Link>
         </div>
 
@@ -42,7 +42,7 @@ export default function AppNavigation() {
             className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted"
             title={theme === "dark" ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
           >
-            {theme === "dark" ? "Světlý režim" : "Tmavý režim"}
+            {theme === "dark" ? "Tmavý režim" : "Světlý režim"}
           </button>
 
           {loading ? (

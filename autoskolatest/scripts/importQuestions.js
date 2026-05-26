@@ -14,6 +14,78 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+const INSERT_BATCH_SIZE = 500;
+const EXPECTED_GROUP_B_QUESTION_COUNT = 1114;
+const GROUP_B_SOURCE_ID_PATTERN = /^\d{8}$/;
+
+const categoryPoints = {
+  "Znalost pravidel provozu na pozemních komunikacích": 2,
+  "Znalost zásad bezpečné jízdy a ovládání vozidla": 2,
+  "Znalost dopravních značek, světelných a akustických signálů": 1,
+  "Schopnost řešení dopravních situací": 4,
+  "Znalost předpisů o podmínkách provozu vozidel": 1,
+  "Znalost předpisů souvisejících s provozem": 2,
+  "Znalost zdravotnické přípravy": 1,
+};
+
+const categoryAliases = {
+  "Pravidla provozu": "Znalost pravidel provozu na pozemních komunikacích",
+  "Zásady bezpečné jízdy": "Znalost zásad bezpečné jízdy a ovládání vozidla",
+  "Dopravní značky":
+    "Znalost dopravních značek, světelných a akustických signálů",
+  "Dopravní situace": "Schopnost řešení dopravních situací",
+  "Technické podmínky": "Znalost předpisů o podmínkách provozu vozidel",
+  "Předpisy o podmínkách provozu vozidel":
+    "Znalost předpisů o podmínkách provozu vozidel",
+  "Předpisy související s provozem":
+    "Znalost předpisů souvisejících s provozem",
+  "Zdravotnická příprava": "Znalost zdravotnické přípravy",
+};
+
+function getPointsForCategory(category) {
+  const categoryName = category?.trim();
+  const canonicalCategory = categoryAliases[categoryName] || categoryName;
+
+  if (Object.prototype.hasOwnProperty.call(categoryPoints, canonicalCategory)) {
+    return categoryPoints[canonicalCategory];
+  }
+
+  throw new Error(
+    `Neznámá kategorie otázky "${category}". Doplň mapování bodů před importem.`
+  );
+}
+
+function isGroupBQuestion(question) {
+  return GROUP_B_SOURCE_ID_PATTERN.test(String(question.source_id || "").trim());
+}
+
+function filterGroupBQuestions(questions) {
+  const groupBQuestions = questions.filter(isGroupBQuestion);
+  const skippedCount = questions.length - groupBQuestions.length;
+
+  if (skippedCount > 0) {
+    const skippedIds = questions
+      .filter((question) => !isGroupBQuestion(question))
+      .map((question) => question.source_id)
+      .join(", ");
+
+    console.log(
+      `Vyřazeno ${skippedCount} otázek mimo sadu B podle source_id: ${skippedIds}`
+    );
+  }
+
+  if (groupBQuestions.length !== EXPECTED_GROUP_B_QUESTION_COUNT) {
+    throw new Error(
+      `Po filtru skupiny B zůstalo ${groupBQuestions.length} otázek, očekáváno je ${EXPECTED_GROUP_B_QUESTION_COUNT}. Import zastaven před mazáním databáze.`
+    );
+  }
+
+  console.log(
+    `K importu připraveno ${groupBQuestions.length} otázek pro skupinu B.`
+  );
+
+  return groupBQuestions;
+}
 
 async function deleteAllRows(table) {
   console.log(`Mažu tabulku ${table}...`);
@@ -25,6 +97,59 @@ async function deleteAllRows(table) {
   console.log(`Tabulka ${table} vymazána.`);
 }
 
+function chunkRows(rows, size) {
+  const chunks = [];
+
+  for (let index = 0; index < rows.length; index += size) {
+    chunks.push(rows.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+async function insertQuestions(rows) {
+  const insertedRows = [];
+  const chunks = chunkRows(rows, INSERT_BATCH_SIZE);
+
+  for (const [index, chunk] of chunks.entries()) {
+    const { data, error } = await supabase
+      .from("questions")
+      .insert(chunk)
+      .select("id");
+
+    if (error) {
+      throw new Error(
+        `Chyba při vkládání otázek v dávce ${index + 1}: ${error.message}`
+      );
+    }
+
+    insertedRows.push(...data);
+    console.log(
+      `Vložena dávka otázek ${index + 1}/${chunks.length} (${data.length} řádků).`
+    );
+  }
+
+  return insertedRows;
+}
+
+async function insertAnswers(rows) {
+  const chunks = chunkRows(rows, INSERT_BATCH_SIZE);
+
+  for (const [index, chunk] of chunks.entries()) {
+    const { error } = await supabase.from("answers").insert(chunk);
+
+    if (error) {
+      throw new Error(
+        `Chyba při vkládání odpovědí v dávce ${index + 1}: ${error.message}`
+      );
+    }
+
+    console.log(
+      `Vložena dávka odpovědí ${index + 1}/${chunks.length} (${chunk.length} řádků).`
+    );
+  }
+}
+
 async function importQuestions() {
   const filePath = path.join(process.cwd(), "data", "questions.json");
   if (!fs.existsSync(filePath)) {
@@ -34,46 +159,38 @@ async function importQuestions() {
   const fileContent = fs.readFileSync(filePath, "utf-8");
   const questions = JSON.parse(fileContent);
 
-  console.log(`Načteno otázek ze souboru: ${questions.length}`);
+  console.log(`Zdrojový soubor obsahuje ${questions.length} otázek.`);
+  const groupBQuestions = filterGroupBQuestions(questions);
 
-  // 1. Vymazání starých dat ve správném pořadí (nejprve potomci)
-  await deleteAllRows("answers");
-  await deleteAllRows("questions");
-
-  // 2. Příprava otázek pro dávkové vložení
-  // Poznámka: Ujistěte se, že tabulka 'questions' má sloupec 'source_id' pro ukládání původního ID.
-  const questionsToInsert = questions.map((q) => ({
-    source_id: q.source_id,
+  // 1. Příprava otázek pro vložení s body přepsanými podle kategorie
+  const questionsToInsert = groupBQuestions.map((q) => ({
     question_text: q.question_text,
     category: q.category,
-    points: q.points,
+    points: getPointsForCategory(q.category),
     image_url: q.image_url,
   }));
 
+  // 2. Vymazání starých dat
+  await deleteAllRows("answers");
+  await deleteAllRows("questions");
+
   // 3. Dávkové vložení všech otázek
   console.log("Vkládám otázky do databáze...");
-  const { data: insertedQuestions, error: questionError } = await supabase
-    .from("questions")
-    .insert(questionsToInsert)
-    .select("id, source_id");
-
-  if (questionError) {
-    throw new Error(`Chyba při vkládání otázek: ${questionError.message}`);
-  }
+  const insertedQuestions = await insertQuestions(questionsToInsert);
   console.log(`Úspěšně vloženo ${insertedQuestions.length} otázek.`);
 
-  // 4. Vytvoření mapování z source_id na nové databázové ID
-  const sourceIdToDbIdMap = insertedQuestions.reduce((acc, q) => {
-    acc[q.source_id] = q.id;
-    return acc;
-  }, {});
+  if (insertedQuestions.length !== groupBQuestions.length) {
+    throw new Error(
+      `Počet vložených otázek (${insertedQuestions.length}) neodpovídá počtu otázek pro skupinu B (${groupBQuestions.length}).`
+    );
+  }
 
   // 5. Příprava všech odpovědí pro dávkové vložení
-  const allAnswersToInsert = questions.flatMap((originalQuestion) => {
-    const questionId = sourceIdToDbIdMap[originalQuestion.source_id];
+  const allAnswersToInsert = groupBQuestions.flatMap((originalQuestion, index) => {
+    const questionId = insertedQuestions[index]?.id;
     if (!questionId) {
       console.warn(
-        `Nenalezeno databázové ID pro otázku se source_id: ${originalQuestion.source_id}. Odpovědi budou přeskočeny.`
+        `Nenalezeno databázové ID pro otázku na pozici ${index + 1}. Odpovědi budou přeskočeny.`
       );
       return [];
     }
@@ -89,13 +206,7 @@ async function importQuestions() {
 
   // 6. Dávkové vložení všech odpovědí
   console.log(`Vkládám ${allAnswersToInsert.length} odpovědí...`);
-  const { error: answersError } = await supabase
-    .from("answers")
-    .insert(allAnswersToInsert);
-
-  if (answersError) {
-    throw new Error(`Chyba při vkládání odpovědí: ${answersError.message}`);
-  }
+  await insertAnswers(allAnswersToInsert);
   console.log("Všechny odpovědi úspěšně vloženy.");
 
   console.log("Import dokončen.");

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getUserQuestionNotes } from "../actions";
+import { useAuth } from "../components/AuthProvider";
 import DeleteQuestionButton from "./DeleteQuestionButton";
 
 function shortText(value, length = 96) {
@@ -12,9 +14,48 @@ function shortText(value, length = 96) {
   return value.length > length ? `${value.slice(0, length)}...` : value;
 }
 
+function notePreview(value, length = 140) {
+  if (!value) {
+    return "";
+  }
+
+  return value.length > length ? `${value.slice(0, length)}...` : value;
+}
+
 export default function QuestionsClient({ questions }) {
+  const { accessToken } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("vse");
+  const [notesByQuestionId, setNotesByQuestionId] = useState({});
+
+  useEffect(() => {
+    let active = true;
+
+    if (!accessToken) {
+      setNotesByQuestionId({});
+      return undefined;
+    }
+
+    getUserQuestionNotes({ access_token: accessToken }).then((response) => {
+      if (!active || !response.ok) {
+        return;
+      }
+
+      const nextNotes = (response.notes || []).reduce((notes, item) => {
+        if (item.note) {
+          notes[String(item.question_id)] = item.note;
+        }
+
+        return notes;
+      }, {});
+
+      setNotesByQuestionId(nextNotes);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken]);
 
   const categories = useMemo(
     () =>
@@ -109,6 +150,14 @@ export default function QuestionsClient({ questions }) {
                     >
                       {shortText(question.question_text)}
                     </Link>
+                    {notesByQuestionId[String(question.id)] && (
+                      <p className="mt-2 rounded-lg border border-border bg-muted p-2 text-xs leading-5 text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          Poznámka:
+                        </span>{" "}
+                        {notePreview(notesByQuestionId[String(question.id)])}
+                      </p>
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                     {question.category || "Bez kategorie"}

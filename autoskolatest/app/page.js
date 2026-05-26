@@ -4,7 +4,7 @@ const actions = [
   {
     href: "/test",
     title: "Spustit test",
-    description: "Procvičit 10 náhodných otázek a uložit výsledek.",
+    description: "Procvičit 25 otázek podle skladby reálné zkoušky na úřadě.",
     tone: "primary",
   },
   {
@@ -26,7 +26,7 @@ export default function Home() {
     <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold uppercase text-primary">
                 Autoškola eTesty
@@ -39,13 +39,6 @@ export default function Home() {
                 otázek nebo zkontrolovat uložené výsledky.
               </p>
             </div>
-
-            <Link
-              href="/questions/new"
-              className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
-            >
-              Přidat otázku
-            </Link>
           </div>
         </header>
 
@@ -79,30 +72,13 @@ export default function Home() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground">
-                Test
-              </p>
-              <p className="mt-1 text-2xl font-bold text-foreground">10 otázek</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground">
-                Hodnocení
-              </p>
-              <p className="mt-1 text-2xl font-bold text-foreground">
-                podle bodů
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground">
-                Obsah
-              </p>
-              <p className="mt-1 text-2xl font-bold text-foreground">
-                otázky a média
-              </p>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold text-foreground">
+            Cvičný test podle reálné zkoušky
+          </h2>
+          <p className="mt-2 max-w-4xl text-muted-foreground">
+            Test obsahuje 25 otázek sestavených podle skutečné zkoušky na úřadě.
+            Na vypracování je limit 30 minut a maximálně lze získat 50 bodů.
+          </p>
         </section>
       </div>
     </main>

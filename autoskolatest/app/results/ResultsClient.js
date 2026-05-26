@@ -5,14 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUserTestHistory } from "../actions";
 import { useAuth } from "../components/AuthProvider";
 
+const MAX_POINTS = 50;
+
 function percent(result) {
-  const total = Number(result.total_points) || 0;
-
-  if (!total) {
-    return 0;
-  }
-
-  return Math.round((Number(result.score) / total) * 100);
+  return Math.round(((Number(result.score) || 0) / MAX_POINTS) * 100);
 }
 
 function formatDuration(seconds) {
@@ -352,9 +348,16 @@ export default function ResultsClient() {
                       </div>
 
                       <div className="rounded-lg bg-muted px-4 py-3 text-lg font-bold text-foreground">
-                        {result.score} / {result.total_points} bodů
+                        {result.score} / {MAX_POINTS} bodů
                       </div>
                     </div>
+
+                    <Link
+                      href={`/results/${result.id}`}
+                      className="mt-4 inline-flex rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-strong"
+                    >
+                      Otevřít vyhodnocení
+                    </Link>
 
                     {answers.length > 0 && (
                       <details className="mt-4 rounded-lg border border-border bg-muted p-4">

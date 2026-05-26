@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { saveTestResult } from "../actions";
 import { useAuth } from "../components/AuthProvider";
@@ -91,17 +92,43 @@ function AnswerOption({ answer, selected, finished, onChoose }) {
   );
 }
 
+function ResultTransition({ redirecting }) {
+  return (
+    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-5 shadow-sm">
+        <h1 className="text-2xl font-bold text-foreground">
+          {redirecting ? "Načítám vyhodnocení" : "Ukládám výsledek"}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          {redirecting
+            ? "Přecházím na stránku s výsledkem testu."
+            : "Probíhá uložení odpovědí a výpočtu bodů."}
+        </p>
+      </section>
+    </main>
+  );
+}
+
 export default function TestClient({ questions }) {
+  const router = useRouter();
   const { user, accessToken } = useAuth();
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [finishReason, setFinishReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [redirectingToResult, setRedirectingToResult] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveNotice, setSaveNotice] = useState("");
   const [timeLeft, setTimeLeft] = useState(TEST_DURATION_SECONDS);
 
   const answeredCount = Object.keys(selectedAnswers).length;
+  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestionNumber = currentQuestionIndex + 1;
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const progressPercent = questions.length
+    ? Math.round((currentQuestionNumber / questions.length) * 100)
+    : 0;
 
   const reviewItems = useMemo(
     () =>
@@ -151,11 +178,23 @@ export default function TestClient({ questions }) {
     }));
   };
 
+  const goToPreviousQuestion = () => {
+    setCurrentQuestionIndex((index) => Math.max(index - 1, 0));
+  };
+
+  const goToNextQuestion = () => {
+    setCurrentQuestionIndex((index) =>
+      Math.min(index + 1, questions.length - 1)
+    );
+  };
+
   const finishTest = useCallback(
     async (reason = "manual") => {
       if (finished || saving) {
         return;
       }
+
+      let redirectPath = "";
 
       setFinished(true);
       setFinishReason(reason);
@@ -192,18 +231,23 @@ export default function TestClient({ questions }) {
 
         if (!response.ok) {
           setSaveError(`Výsledek se nepodařilo uložit: ${response.error}`);
-        } else if (!accessToken) {
-          setSaveNotice(
-            "Výsledek je uložen anonymně. Pro osobní historii se přihlaste před spuštěním testu."
-          );
         } else if (response.storedReview === false) {
           setSaveNotice(
             "Skóre se uložilo, ale detail revize vyžaduje novou Supabase migraci."
           );
+          redirectPath = response.id ? `/results/${response.id}` : "/results";
+        } else {
+          redirectPath = response.id ? `/results/${response.id}` : "/results";
         }
       } catch (error) {
         setSaveError(`Výsledek se nepodařilo uložit: ${error.message}`);
       } finally {
+        if (redirectPath || reason === "timeout") {
+          setRedirectingToResult(true);
+          router.replace(redirectPath || "/results");
+          return;
+        }
+
         setSaving(false);
       }
     },
@@ -215,6 +259,7 @@ export default function TestClient({ questions }) {
       result.score,
       result.totalPoints,
       reviewItems,
+      router,
       saving,
       timeLeft,
       user?.email,
@@ -241,6 +286,10 @@ export default function TestClient({ questions }) {
 
   const timeWarning = timeLeft <= 60;
 
+  if (saving || redirectingToResult) {
+    return <ResultTransition redirecting={redirectingToResult} />;
+  }
+
   return (
     <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-5">
@@ -258,7 +307,7 @@ export default function TestClient({ questions }) {
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div>
               <div
                 className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
                   timeWarning && !finished
@@ -267,9 +316,6 @@ export default function TestClient({ questions }) {
                 }`}
               >
                 Čas: {formatTime(timeLeft)}
-              </div>
-              <div className="rounded-lg border border-border bg-muted px-4 py-3 text-sm font-semibold text-foreground">
-                {result.score} / {result.totalPoints} bodů
               </div>
             </div>
           </div>
@@ -300,112 +346,102 @@ export default function TestClient({ questions }) {
           </section>
         )}
 
-        <div className="space-y-4">
-          {reviewItems.map(
-            ({ question, selectedAnswer, correctAnswer, isCorrect, explanation }, index) => (
-              <section
-                key={question.id}
-                className="rounded-lg border border-border bg-card p-5 shadow-sm"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {index + 1}. {question.question_text}
-                  </h2>
-                  <span className="w-fit rounded-lg bg-muted px-3 py-1 text-sm font-semibold text-muted-foreground">
-                    {question.points} bodů
-                  </span>
+        {currentQuestion ? (
+          <>
+            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-primary">
+                    Otázka {currentQuestionNumber} z {questions.length}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Zodpovězeno {answeredCount} z {questions.length} otázek.
+                  </p>
                 </div>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {progressPercent} %
+                </span>
+              </div>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {question.category || "Bez kategorie"}
-                </p>
-
-                <MediaPreview
-                  url={question.image_url}
-                  alt={`Médium k otázce ${index + 1}`}
-                  className="mt-4"
+              <div className="mt-4 h-3 overflow-hidden rounded-lg bg-muted">
+                <div
+                  className="h-full rounded-lg bg-primary transition-all"
+                  style={{ width: `${progressPercent}%` }}
                 />
+              </div>
+            </section>
 
-                <div className="mt-4 space-y-2">
-                  {question.answers.map((answer) => (
-                    <AnswerOption
-                      key={answer.id}
-                      answer={answer}
-                      selected={selectedAnswers[question.id] === answer.id}
-                      finished={finished}
-                      onChoose={() => chooseAnswer(question.id, answer.id)}
-                    />
-                  ))}
-                </div>
+            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  {currentQuestion.question_text}
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {currentQuestion.category || "Bez kategorie"}
+                </p>
+              </div>
 
-                {finished && (
-                  <div
-                    className={`mt-4 rounded-lg border p-4 ${
-                      isCorrect
-                        ? "border-accent bg-accent-soft"
-                        : "border-destructive bg-destructive-soft"
-                    }`}
+              <MediaPreview
+                url={currentQuestion.image_url}
+                alt={`Médium k otázce ${currentQuestionNumber}`}
+                className="mt-4"
+              />
+
+              <div className="mt-4 space-y-2">
+                {currentQuestion.answers.map((answer) => (
+                  <AnswerOption
+                    key={answer.id}
+                    answer={answer}
+                    selected={selectedAnswers[currentQuestion.id] === answer.id}
+                    finished={finished}
+                    onChoose={() => chooseAnswer(currentQuestion.id, answer.id)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                {currentQuestionIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={goToPreviousQuestion}
+                    disabled={saving || finished}
+                    className="w-full rounded-lg border border-border bg-card px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                   >
-                    <p className="text-sm font-semibold text-foreground">
-                      {isCorrect ? "Správně" : "Chyba"}
-                    </p>
-                    <dl className="mt-3 grid gap-3 text-sm text-foreground sm:grid-cols-2">
-                      <div>
-                        <dt className="font-semibold">Vaše odpověď</dt>
-                        <dd className="mt-1 text-muted-foreground">
-                          {answerText(selectedAnswer)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="font-semibold">Správná odpověď</dt>
-                        <dd className="mt-1 text-muted-foreground">
-                          {answerText(correctAnswer)}
-                        </dd>
-                      </div>
-                    </dl>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      {explanation}
-                    </p>
-                  </div>
+                    Předchozí otázka
+                  </button>
                 )}
-              </section>
-            )
-          )}
-        </div>
+              </div>
 
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row">
-          {!finished ? (
-            <button
-              type="button"
-              onClick={() => finishTest("manual")}
-              disabled={saving}
-              className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? "Ukládám..." : "Vyhodnotit test"}
-            </button>
-          ) : (
-            <Link
-              href="/test"
-              className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
-            >
-              Spustit další test
-            </Link>
-          )}
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => finishTest("manual")}
+                  disabled={saving || finished}
+                  className="rounded-lg bg-destructive px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {saving ? "Ukládám..." : "Vyhodnotit test"}
+                </button>
 
-          <Link
-            href="/results"
-            className="rounded-lg border border-border bg-card px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
-          >
-            Historie
-          </Link>
-
-          <Link
-            href="/questions"
-            className="rounded-lg border border-border bg-card px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
-          >
-            Otázky
-          </Link>
-        </div>
+                {!isLastQuestion && (
+                  <button
+                    type="button"
+                    onClick={goToNextQuestion}
+                    disabled={saving || finished}
+                    className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Další otázka
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <section className="rounded-lg border border-warning bg-warning-soft p-5 text-sm text-warning">
+            Test neobsahuje žádné otázky.
+          </section>
+        )}
       </div>
     </main>
   );

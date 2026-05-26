@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { questionSchema, testResultSchema } from "./lib/questionSchema";
-import { supabase } from "./lib/supabase";
+import { createUserSupabaseClient, supabase } from "./lib/supabase";
 
 function firstValidationMessage(error) {
   return error.issues[0]?.message || "Data nejsou platná.";
@@ -32,8 +32,10 @@ function isMissingColumnError(error, columnName) {
 
   return (
     error?.code === "PGRST204" ||
+    error?.code === "42P01" ||
     message.includes(columnName) ||
     message.includes("schema cache") ||
+    message.includes("does not exist") ||
     message.includes("column")
   );
 }
@@ -364,5 +366,120 @@ export async function getUserTestHistory(input = {}) {
     ok: true,
     results: fallbackData || [],
     storedReview: false,
+  };
+}
+
+export async function getUserQuestionNotes(input = {}) {
+  const user = await verifiedUser(input.access_token);
+
+  if (!user) {
+    return { ok: true, notes: [] };
+  }
+
+  const userSupabase = createUserSupabaseClient(input.access_token);
+
+  const { data, error } = await userSupabase
+    .from("user_question_notes")
+    .select("question_id,note,updated_at")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    if (isMissingColumnError(error, "user_question_notes")) {
+      return { ok: true, notes: [], notesAvailable: false };
+    }
+
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true, notes: data || [], notesAvailable: true };
+}
+
+export async function getQuestionNote(input = {}) {
+  const user = await verifiedUser(input.access_token);
+  const questionId = normalizeQuestionId(input.question_id);
+
+  if (!questionId) {
+    return { ok: false, error: "ID otázky chybí nebo není platné." };
+  }
+
+  if (!user) {
+    return { ok: true, note: "", authenticated: false };
+  }
+
+  const userSupabase = createUserSupabaseClient(input.access_token);
+
+  const { data, error } = await userSupabase
+    .from("user_question_notes")
+    .select("note,updated_at")
+    .eq("user_id", user.id)
+    .eq("question_id", questionId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingColumnError(error, "user_question_notes")) {
+      return { ok: true, note: "", notesAvailable: false };
+    }
+
+    return { ok: false, error: error.message };
+  }
+
+  return {
+    ok: true,
+    note: data?.note || "",
+    updatedAt: data?.updated_at || null,
+    authenticated: true,
+    notesAvailable: true,
+  };
+}
+
+export async function saveQuestionNote(input = {}) {
+  const user = await verifiedUser(input.access_token);
+  const questionId = normalizeQuestionId(input.question_id);
+
+  if (!user) {
+    return { ok: false, error: "Pro uložení poznámky se nejdříve přihlaste." };
+  }
+
+  if (!questionId) {
+    return { ok: false, error: "ID otázky chybí nebo není platné." };
+  }
+
+  const note = String(input.note || "").trim().slice(0, 10000);
+  const now = new Date().toISOString();
+  const userSupabase = createUserSupabaseClient(input.access_token);
+
+  const { data, error } = await userSupabase
+    .from("user_question_notes")
+    .upsert(
+      {
+        user_id: user.id,
+        question_id: questionId,
+        note,
+        updated_at: now,
+      },
+      { onConflict: "user_id,question_id" }
+    )
+    .select("note,updated_at")
+    .single();
+
+  if (error) {
+    if (isMissingColumnError(error, "user_question_notes")) {
+      return {
+        ok: false,
+        error: "Chybí tabulka user_question_notes. Spusťte Supabase migraci pro poznámky.",
+      };
+    }
+
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/questions");
+  revalidatePath(`/questions/${questionId}`);
+
+  return {
+    ok: true,
+    note: data.note,
+    updatedAt: data.updated_at,
   };
 }
