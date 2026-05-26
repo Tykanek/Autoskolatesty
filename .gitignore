@@ -1,0 +1,7 @@
+.idea/
+*.iml
+__pycache__/
+*.py[cod]
+.env*
+autoskola_eTesty_API/.git/
+autoskola_eTesty_API/questions_export.json
