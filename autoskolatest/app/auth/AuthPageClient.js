@@ -49,8 +49,8 @@ export default function AuthPageClient() {
 
   if (loading) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-xl rounded-lg border border-border bg-card p-5 shadow-sm">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <section className="mx-auto max-w-xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           Načítám účet...
         </section>
       </main>
@@ -59,15 +59,15 @@ export default function AuthPageClient() {
 
   if (user) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-xl rounded-lg border border-border bg-card p-5 shadow-sm">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <section className="mx-auto max-w-xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
             Přehled
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             Jste přihlášeni
           </h1>
-          <p className="mt-3 text-muted-foreground">
+          <p className="mt-3 break-all text-muted-foreground sm:break-normal">
             {user.user_metadata?.full_name || user.email}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -90,13 +90,13 @@ export default function AuthPageClient() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
             Přehled
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             {mode === "register" ? "Registrace" : "Přihlášení"}
           </h1>
           <p className="mt-2 text-muted-foreground">
@@ -104,7 +104,7 @@ export default function AuthPageClient() {
           </p>
         </header>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="mb-5 grid grid-cols-2 rounded-lg border border-border bg-muted p-1">
             <button
               type="button"

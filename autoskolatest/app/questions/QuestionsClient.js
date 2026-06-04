@@ -115,7 +115,60 @@ export default function QuestionsClient({ questions }) {
         </label>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 p-3 md:hidden">
+        {filteredQuestions.length === 0 ? (
+          <div className="rounded-lg border border-border bg-muted p-4 text-center text-sm text-muted-foreground">
+            Žádné otázky neodpovídají zadaným kritériím.
+          </div>
+        ) : (
+          filteredQuestions.map((question) => (
+            <article
+              key={question.id}
+              className="rounded-lg border border-border bg-card p-4 shadow-sm"
+            >
+              <Link
+                href={`/questions/${question.id}`}
+                className="block font-semibold leading-6 text-foreground hover:text-primary"
+              >
+                {shortText(question.question_text, 130)}
+              </Link>
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                <span className="rounded-full bg-muted px-3 py-1 text-muted-foreground">
+                  {question.category || "Bez kategorie"}
+                </span>
+                <span className="rounded-full bg-primary-soft px-3 py-1 text-primary">
+                  {question.points} b.
+                </span>
+              </div>
+
+              {notesByQuestionId[String(question.id)] && (
+                <p className="mt-3 rounded-lg border border-border bg-muted p-3 text-xs leading-5 text-muted-foreground">
+                  <span className="font-semibold text-foreground">
+                    Poznámka:
+                  </span>{" "}
+                  {notePreview(notesByQuestionId[String(question.id)])}
+                </p>
+              )}
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Link
+                  href={`/questions/${question.id}/edit`}
+                  className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm font-semibold text-primary transition hover:bg-primary-soft"
+                >
+                  Upravit
+                </Link>
+                <DeleteQuestionButton
+                  questionId={question.id}
+                  className="w-full border border-destructive/30 text-center"
+                />
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted">
             <tr>

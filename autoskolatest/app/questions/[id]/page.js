@@ -53,9 +53,9 @@ export default async function QuestionDetailPage({ params }) {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <Link href="/questions" className="text-sm font-semibold text-primary hover:text-primary-strong">
@@ -85,7 +85,7 @@ export default async function QuestionDetailPage({ params }) {
         </header>
 
         {question.image_url && (
-          <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <h2 className="mb-3 text-lg font-semibold text-foreground">
               Média k otázce
             </h2>
@@ -93,7 +93,7 @@ export default async function QuestionDetailPage({ params }) {
           </section>
         )}
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <h2 className="text-xl font-semibold text-foreground">Odpovědi</h2>
           {question.explanation && (
             <div className="mt-4 rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">

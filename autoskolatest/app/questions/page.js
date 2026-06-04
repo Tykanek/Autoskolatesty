@@ -13,8 +13,8 @@ export default async function QuestionsPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-lg border border-destructive bg-destructive-soft p-5 text-destructive">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-lg border border-destructive bg-destructive-soft p-4 text-destructive sm:p-5">
           <h1 className="text-2xl font-bold">Chyba při načítání otázek</h1>
           <p className="mt-3 text-sm">{error.message}</p>
           <Link href="/" className="mt-5 inline-flex font-semibold underline">
@@ -28,15 +28,15 @@ export default async function QuestionsPage() {
   const safeQuestions = questions || [];
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
                 Přehled
               </Link>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">
+              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Seznam otázek
               </h1>
               <p className="mt-2 text-muted-foreground">

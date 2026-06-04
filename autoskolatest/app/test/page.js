@@ -140,8 +140,8 @@ export default async function TestPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-lg border border-destructive bg-destructive-soft p-5 text-destructive">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-lg border border-destructive bg-destructive-soft p-4 text-destructive sm:p-5">
           <h1 className="text-2xl font-bold">Chyba při načítání testu</h1>
           <p className="mt-3 text-sm">{error.message}</p>
           <Link href="/" className="mt-5 inline-flex font-semibold underline">
@@ -158,9 +158,9 @@ export default async function TestPage() {
 
   if (shortages.length > 0) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-5 shadow-sm">
-          <h1 className="text-3xl font-bold text-foreground">Cvičný test</h1>
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Cvičný test</h1>
           <p className="mt-3 text-muted-foreground">
             V databázi není dostatek použitelných otázek pro test o{" "}
             {TEST_QUESTION_COUNT} otázkách podle předepsaných kategorií.

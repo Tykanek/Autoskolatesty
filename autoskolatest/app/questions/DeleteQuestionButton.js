@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { deleteQuestion } from "../actions";
 
-export default function DeleteQuestionButton({ questionId }) {
+export default function DeleteQuestionButton({ questionId, className = "" }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
 
@@ -35,7 +35,7 @@ export default function DeleteQuestionButton({ questionId }) {
             type="button"
             onClick={handleDelete}
             disabled={isPending}
-            className="rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive-soft disabled:cursor-not-allowed disabled:opacity-50"
+            className={`rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive-soft disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
         >
             {isPending ? "Mažu..." : "Smazat"}
         </button>

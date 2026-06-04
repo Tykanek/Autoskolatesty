@@ -94,9 +94,9 @@ function AnswerOption({ answer, selected, finished, onChoose }) {
 
 function ResultTransition({ redirecting }) {
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-5 shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">
           {redirecting ? "Načítám vyhodnocení" : "Ukládám výsledek"}
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -291,15 +291,15 @@ export default function TestClient({ questions }) {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
                 Přehled
               </Link>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">
+              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Cvičný test
               </h1>
               <p className="mt-2 text-muted-foreground">
@@ -348,7 +348,7 @@ export default function TestClient({ questions }) {
 
         {currentQuestion ? (
           <>
-            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-primary">
@@ -371,9 +371,9 @@ export default function TestClient({ questions }) {
               </div>
             </section>
 
-            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+            <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
               <div>
-                <h2 className="text-xl font-semibold text-foreground">
+                <h2 className="text-lg font-semibold leading-7 text-foreground sm:text-xl">
                   {currentQuestion.question_text}
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -382,6 +382,7 @@ export default function TestClient({ questions }) {
               </div>
 
               <MediaPreview
+                key={currentQuestion.id ?? currentQuestion.image_url ?? currentQuestionNumber}
                 url={currentQuestion.image_url}
                 alt={`Médium k otázce ${currentQuestionNumber}`}
                 className="mt-4"
@@ -400,7 +401,7 @@ export default function TestClient({ questions }) {
               </div>
             </section>
 
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div>
                 {currentQuestionIndex > 0 && (
                   <button
@@ -415,25 +416,25 @@ export default function TestClient({ questions }) {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => finishTest("manual")}
-                  disabled={saving || finished}
-                  className="rounded-lg bg-destructive px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? "Ukládám..." : "Vyhodnotit test"}
-                </button>
-
                 {!isLastQuestion && (
                   <button
                     type="button"
                     onClick={goToNextQuestion}
                     disabled={saving || finished}
-                    className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                   >
                     Další otázka
                   </button>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => finishTest("manual")}
+                  disabled={saving || finished}
+                  className="w-full rounded-lg bg-destructive px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {saving ? "Ukládám..." : "Vyhodnotit test"}
+                </button>
               </div>
             </div>
           </>

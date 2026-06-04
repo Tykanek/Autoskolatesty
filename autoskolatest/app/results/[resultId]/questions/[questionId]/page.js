@@ -98,16 +98,16 @@ function SnapshotAnswer({ label, value, state }) {
 
 function MissingQuestionSnapshot({ result, review, questionNumber }) {
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <Link
             href={`/results/${result.id}`}
             className="text-sm font-semibold text-primary hover:text-primary-strong"
           >
             Zpět na výsledek testu
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             {questionNumber ? `Otázka č. ${questionNumber}` : "Revize otázky"}
           </h1>
           <p className="mt-2 text-muted-foreground">
@@ -116,7 +116,7 @@ function MissingQuestionSnapshot({ result, review, questionNumber }) {
           </p>
         </header>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="space-y-4">
             <div>
               <p className="text-sm font-semibold text-muted-foreground">
@@ -137,7 +137,7 @@ function MissingQuestionSnapshot({ result, review, questionNumber }) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <h2 className="text-xl font-semibold text-foreground">Odpovědi</h2>
           <div className="mt-4 space-y-3">
             <SnapshotAnswer
@@ -154,7 +154,7 @@ function MissingQuestionSnapshot({ result, review, questionNumber }) {
         </section>
 
         {review.explanation && (
-          <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <h2 className="text-xl font-semibold text-foreground">
               Vysvětlení
             </h2>
@@ -215,16 +215,16 @@ export default async function ResultQuestionPage({ params, searchParams }) {
   );
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <Link
             href={`/results/${result.id}`}
             className="text-sm font-semibold text-primary hover:text-primary-strong"
           >
             Zpět na výsledek testu
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             {questionNumber ? `Otázka č. ${questionNumber}` : "Revize otázky"}
           </h1>
           <p className="mt-2 text-muted-foreground">
@@ -232,7 +232,7 @@ export default async function ResultQuestionPage({ params, searchParams }) {
           </p>
         </header>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-foreground">
@@ -302,7 +302,7 @@ export default async function ResultQuestionPage({ params, searchParams }) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <h2 className="text-xl font-semibold text-foreground">Odpovědi</h2>
 
           {!selectedAnswer && (
@@ -375,7 +375,7 @@ export default async function ResultQuestionPage({ params, searchParams }) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <QuestionNoteForm questionId={question.id} />
         </section>
       </div>

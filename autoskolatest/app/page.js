@@ -23,15 +23,15 @@ const actions = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:gap-6">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold uppercase text-primary">
                 Autoškola eTesty
               </p>
-              <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">
+              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-4xl">
                 Přehled pro procvičování a správu otázek
               </h1>
               <p className="mt-3 max-w-2xl text-muted-foreground">
@@ -47,7 +47,7 @@ export default function Home() {
             <Link
               key={action.href}
               href={action.href}
-              className="group rounded-lg border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+              className="group rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md sm:p-5"
             >
               <div
                 className={
@@ -71,7 +71,7 @@ export default function Home() {
           ))}
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <h2 className="text-xl font-semibold text-foreground">
             Cvičný test podle reálné zkoušky
           </h2>

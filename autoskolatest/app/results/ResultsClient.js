@@ -127,8 +127,8 @@ export default function ResultsClient() {
 
   if (authLoading) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-5 shadow-sm">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           Načítám účet...
         </section>
       </main>
@@ -137,12 +137,12 @@ export default function ResultsClient() {
 
   if (!user) {
     return (
-      <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-        <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-5 shadow-sm">
+      <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+        <section className="mx-auto max-w-5xl rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
             Přehled
           </Link>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">
+          <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
             Osobní historie testů
           </h1>
           <p className="mt-3 text-muted-foreground">
@@ -150,7 +150,7 @@ export default function ResultsClient() {
           </p>
           <Link
             href="/auth"
-            className="mt-5 inline-flex rounded-lg bg-primary px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-primary-strong"
+            className="mt-5 inline-flex w-full justify-center rounded-lg bg-primary px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-primary-strong sm:w-auto"
           >
             Přihlásit nebo registrovat
           </Link>
@@ -160,18 +160,18 @@ export default function ResultsClient() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <Link href="/" className="text-sm font-semibold text-primary hover:text-primary-strong">
                 Přehled
               </Link>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">
+              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Osobní historie testů
               </h1>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 break-all text-muted-foreground sm:break-normal">
                 Přihlášený účet: {user.email}
               </p>
             </div>
@@ -185,12 +185,6 @@ export default function ResultsClient() {
               >
                 {loading ? "Načítám..." : "Obnovit"}
               </button>
-              <Link
-                href="/test"
-                className="rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
-              >
-                Spustit test
-              </Link>
             </div>
           </div>
         </header>
@@ -207,42 +201,42 @@ export default function ResultsClient() {
           </section>
         )}
 
-        <section className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <p className="text-sm font-semibold text-muted-foreground">
               Testů
             </p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
+            <p className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
               {stats.totalTests}
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <p className="text-sm font-semibold text-muted-foreground">
               Průměr
             </p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
+            <p className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
               {stats.average} %
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <p className="text-sm font-semibold text-muted-foreground">
               Nejlepší výsledek
             </p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
+            <p className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
               {stats.best} %
             </p>
           </div>
-          <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
             <p className="text-sm font-semibold text-muted-foreground">
               Poslední test
             </p>
-            <p className="mt-2 text-3xl font-bold text-foreground">
+            <p className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
               {stats.latest ? `${percent(stats.latest)} %` : "-"}
             </p>
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
@@ -287,7 +281,7 @@ export default function ResultsClient() {
           )}
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <h2 className="text-xl font-semibold text-foreground">
             Nejproblematičtější otázky
           </h2>
@@ -335,7 +329,7 @@ export default function ResultsClient() {
                 const answers = safeAnswers(result);
 
                 return (
-                  <article key={result.id} className="p-5">
+                  <article key={result.id} className="p-4 sm:p-5">
                     <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
                       <div>
                         <h2 className="font-semibold text-foreground">
@@ -354,7 +348,7 @@ export default function ResultsClient() {
 
                     <Link
                       href={`/results/${result.id}`}
-                      className="mt-4 inline-flex rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-strong"
+                      className="mt-4 inline-flex w-full justify-center rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-strong sm:w-auto"
                     >
                       Otevřít vyhodnocení
                     </Link>

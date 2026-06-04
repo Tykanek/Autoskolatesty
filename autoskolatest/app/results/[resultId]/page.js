@@ -44,18 +44,18 @@ export default async function TestResultPage({ params }) {
   const progressWidth = `${Math.max(0, Math.min(percent, 100))}%`;
 
   return (
-    <main className="min-h-screen px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-lg border border-border bg-card p-5 shadow-sm">
+    <main className="min-h-screen px-3 py-4 text-foreground sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <header className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Link href="/results" className="text-sm font-semibold text-primary hover:text-primary-strong">
                 Historie testů
               </Link>
-              <h1 className="mt-2 text-3xl font-bold text-foreground">
+              <h1 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
                 Výsledek testu
               </h1>
-              <p className="mt-3 text-lg font-semibold text-foreground">
+              <p className="mt-3 text-base font-semibold text-foreground sm:text-lg">
                 Bylo dosaženo {score} bodů z maxima {MAX_POINTS} bodů
               </p>
               <p className="mt-2 text-muted-foreground">
@@ -65,7 +65,7 @@ export default async function TestResultPage({ params }) {
             </div>
 
             <div
-              className={`rounded-lg border p-5 text-lg font-bold shadow-sm ${
+                className={`rounded-lg border p-4 text-base font-bold shadow-sm sm:p-5 sm:text-lg ${
                 passed
                   ? "border-accent bg-accent-soft text-accent"
                   : "border-destructive bg-destructive-soft text-destructive"
@@ -76,7 +76,7 @@ export default async function TestResultPage({ params }) {
           </div>
         </header>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
@@ -113,7 +113,7 @@ export default async function TestResultPage({ params }) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
@@ -130,14 +130,14 @@ export default async function TestResultPage({ params }) {
               U tohoto výsledku nejsou uložené detailní odpovědi.
             </p>
           ) : (
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
               {answers.map((answer, index) => (
                 <a
                   key={`${answer.question_id}-${index}`}
                   href={`/results/${result.id}/questions/${answer.question_id}?index=${index + 1}`}
                   target="_blank"
                   rel="noreferrer"
-                  className={`rounded-lg border p-4 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`rounded-lg border p-3 text-center text-sm font-bold transition hover:-translate-y-0.5 hover:shadow-md sm:p-4 ${
                     answer.is_correct
                       ? "border-accent bg-accent-soft text-accent"
                       : "border-destructive bg-destructive-soft text-destructive"
@@ -150,7 +150,7 @@ export default async function TestResultPage({ params }) {
           )}
         </section>
 
-        <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 shadow-sm sm:flex-row">
+        <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm sm:flex-row sm:p-5">
           <Link
             href="/test"
             className="rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
