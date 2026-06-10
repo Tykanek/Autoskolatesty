@@ -143,6 +143,26 @@ async function verifiedUser(accessToken) {
   return data.user || null;
 }
 
+async function requireAdmin(accessToken) {
+  const user = await verifiedUser(accessToken);
+
+  if (!user) {
+    throw new Error("Neoprávněný přístup");
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error || profile?.role !== "admin") {
+    throw new Error("Neoprávněný přístup");
+  }
+
+  return user;
+}
+
 function fallbackResultRow(data, user) {
   return {
     user_name: user?.email || data.user_name || "Student",
@@ -162,7 +182,9 @@ function extendedResultRow(data, user) {
   };
 }
 
-export async function createQuestion(input) {
+export async function createQuestion(input, accessToken) {
+  await requireAdmin(accessToken);
+
   const parsed = questionSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -190,7 +212,9 @@ export async function createQuestion(input) {
   return { ok: true, id: savedQuestion.id };
 }
 
-export async function updateQuestion(questionId, input) {
+export async function updateQuestion(questionId, input, accessToken) {
+  await requireAdmin(accessToken);
+
   const id = normalizeQuestionId(questionId);
 
   if (!id) {
@@ -234,7 +258,9 @@ export async function updateQuestion(questionId, input) {
   return { ok: true, id };
 }
 
-export async function saveQuestion(formData) {
+export async function saveQuestion(formData, accessToken) {
+  await requireAdmin(accessToken);
+
   const rawData = Object.fromEntries(formData);
   const id = normalizeQuestionId(rawData.id);
   let answers;
@@ -254,10 +280,14 @@ export async function saveQuestion(formData) {
     answers,
   };
 
-  return id ? updateQuestion(id, payload) : createQuestion(payload);
+  return id
+    ? updateQuestion(id, payload, accessToken)
+    : createQuestion(payload, accessToken);
 }
 
-export async function deleteQuestion(questionId) {
+export async function deleteQuestion(questionId, accessToken) {
+  await requireAdmin(accessToken);
+
   const id = normalizeQuestionId(questionId);
 
   if (!id) {

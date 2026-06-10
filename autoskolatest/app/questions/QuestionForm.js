@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { createQuestion, updateQuestion } from "../actions";
+import { useAuth } from "../components/AuthProvider";
 import { questionSchema } from "../lib/questionSchema";
 
 const blankAnswer = { answer_text: "", media_url: "", is_correct: false };
@@ -36,6 +37,7 @@ function FieldError({ message }) {
 
 export default function QuestionForm({ mode = "create", question }) {
   const router = useRouter();
+  const { accessToken } = useAuth();
   const answers = initialAnswers(question);
   const firstCorrect = answers.findIndex((answer) => answer.is_correct);
   const [correctIndex, setCorrectIndex] = useState(
@@ -112,18 +114,22 @@ export default function QuestionForm({ mode = "create", question }) {
 
     setFormError("");
 
-    const result =
-      mode === "edit"
-        ? await updateQuestion(question.id, payload)
-        : await createQuestion(payload);
+    try {
+      const result =
+        mode === "edit"
+          ? await updateQuestion(question.id, payload, accessToken)
+          : await createQuestion(payload, accessToken);
 
-    if (!result.ok) {
-      setFormError(result.error);
-      return;
+      if (!result.ok) {
+        setFormError(result.error);
+        return;
+      }
+
+      router.push(mode === "edit" ? `/questions/${result.id}` : "/questions");
+      router.refresh();
+    } catch (error) {
+      setFormError(error.message || "Neoprávněný přístup");
     }
-
-    router.push(mode === "edit" ? `/questions/${result.id}` : "/questions");
-    router.refresh();
   };
 
   return (

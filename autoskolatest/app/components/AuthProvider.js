@@ -9,6 +9,8 @@ export function AuthProvider({ children }) {
   const [client, setClient] = useState(null);
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [roleLoading, setRoleLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState("");
 
@@ -29,14 +31,22 @@ export function AuthProvider({ children }) {
           setAuthError(error.message);
         }
 
+        const nextUser = data.session?.user || null;
+
         setSession(data.session);
-        setUser(data.session?.user || null);
+        setUser(nextUser);
+        setRole(null);
+        setRoleLoading(Boolean(nextUser));
         setLoading(false);
       });
 
       const listener = supabase.auth.onAuthStateChange((_event, nextSession) => {
+        const nextUser = nextSession?.user || null;
+
         setSession(nextSession);
-        setUser(nextSession?.user || null);
+        setUser(nextUser);
+        setRole(null);
+        setRoleLoading(Boolean(nextUser));
         setLoading(false);
       });
 
@@ -52,11 +62,44 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    if (!client || !user) {
+      setRole(null);
+      setRoleLoading(false);
+      return undefined;
+    }
+
+    setRoleLoading(true);
+
+    client
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) {
+          return;
+        }
+
+        setRole(data?.role || "user");
+        setRoleLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [client, user]);
+
   const value = useMemo(
     () => ({
       client,
       session,
       user,
+      role,
+      isAdmin: role === "admin",
+      roleLoading,
       loading,
       authError,
       accessToken: session?.access_token || "",
@@ -92,7 +135,7 @@ export function AuthProvider({ children }) {
       },
       signOut: () => client?.auth.signOut(),
     }),
-    [authError, client, loading, session, user]
+    [authError, client, loading, role, roleLoading, session, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

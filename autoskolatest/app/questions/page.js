@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdminOnly from "../components/AdminOnly";
 import { supabase } from "../lib/supabase";
 import QuestionsClient from "./QuestionsClient";
 
@@ -51,12 +52,14 @@ export default async function QuestionsPage() {
               >
                 Spustit test
               </Link>
-              <Link
-                href="/questions/new"
-                className="rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
-              >
-                Přidat otázku
-              </Link>
+              <AdminOnly>
+                <Link
+                  href="/questions/new"
+                  className="rounded-lg bg-primary px-4 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong"
+                >
+                  Přidat otázku
+                </Link>
+              </AdminOnly>
             </div>
           </div>
         </header>

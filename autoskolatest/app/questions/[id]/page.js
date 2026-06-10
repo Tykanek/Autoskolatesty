@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import AdminOnly from "../../components/AdminOnly";
 import MediaPreview, { isMediaUrl } from "../../components/MediaPreview";
 import { supabase } from "../../lib/supabase";
 import DeleteQuestionButton from "../DeleteQuestionButton";
@@ -72,15 +73,17 @@ export default async function QuestionDetailPage({ params }) {
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Link
-                href={`/questions/${question.id}/edit`}
-                className="rounded-lg border border-border bg-card px-4 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
-              >
-                Upravit
-              </Link>
-              <DeleteQuestionButton questionId={question.id} />
-            </div>
+            <AdminOnly>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  href={`/questions/${question.id}/edit`}
+                  className="rounded-lg border border-border bg-card px-4 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted"
+                >
+                  Upravit
+                </Link>
+                <DeleteQuestionButton questionId={question.id} />
+              </div>
+            </AdminOnly>
           </div>
         </header>
 

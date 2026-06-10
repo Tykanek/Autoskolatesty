@@ -23,7 +23,7 @@ function notePreview(value, length = 140) {
 }
 
 export default function QuestionsClient({ questions }) {
-  const { accessToken } = useAuth();
+  const { accessToken, isAdmin } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("vse");
   const [notesByQuestionId, setNotesByQuestionId] = useState({});
@@ -151,18 +151,20 @@ export default function QuestionsClient({ questions }) {
                 </p>
               )}
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Link
-                  href={`/questions/${question.id}/edit`}
-                  className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm font-semibold text-primary transition hover:bg-primary-soft"
-                >
-                  Upravit
-                </Link>
-                <DeleteQuestionButton
-                  questionId={question.id}
-                  className="w-full border border-destructive/30 text-center"
-                />
-              </div>
+              {isAdmin && (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/questions/${question.id}/edit`}
+                    className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm font-semibold text-primary transition hover:bg-primary-soft"
+                  >
+                    Upravit
+                  </Link>
+                  <DeleteQuestionButton
+                    questionId={question.id}
+                    className="w-full border border-destructive/30 text-center"
+                  />
+                </div>
+              )}
             </article>
           ))
         )}
@@ -181,15 +183,17 @@ export default function QuestionsClient({ questions }) {
               <th scope="col" className="px-4 py-3 text-left text-sm font-semibold text-foreground">
                 Body
               </th>
-              <th scope="col" className="px-4 py-3 text-right text-sm font-semibold text-foreground">
-                Akce
-              </th>
+              {isAdmin && (
+                <th scope="col" className="px-4 py-3 text-right text-sm font-semibold text-foreground">
+                  Akce
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-card">
             {filteredQuestions.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground">
+                <td colSpan={isAdmin ? 4 : 3} className="px-4 py-12 text-center text-muted-foreground">
                   Žádné otázky neodpovídají zadaným kritériím.
                 </td>
               </tr>
@@ -218,17 +222,19 @@ export default function QuestionsClient({ questions }) {
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-muted-foreground">
                     {question.points}
                   </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/questions/${question.id}/edit`}
-                        className="rounded-lg px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary-soft"
-                      >
-                        Upravit
-                      </Link>
-                      <DeleteQuestionButton questionId={question.id} />
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/questions/${question.id}/edit`}
+                          className="rounded-lg px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary-soft"
+                        >
+                          Upravit
+                        </Link>
+                        <DeleteQuestionButton questionId={question.id} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
