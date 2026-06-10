@@ -127,6 +127,7 @@ export function AuthProvider({ children }) {
           email,
           password,
           options: {
+            emailRedirectTo: new URL("/auth", window.location.origin).toString(),
             data: {
               full_name: fullName,
             },

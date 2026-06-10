@@ -16,8 +16,13 @@ Aplikace používá Supabase jako jediný zdroj dat.
 - Změny provedené administrátorem jsou okamžitě dostupné všem instancím
   aplikace připojeným ke stejnému Supabase projektu.
 
-Pro spuštění aplikace tedy stačí připojení k existujícímu Supabase projektu,
-který již obsahuje databázové schéma a data.
+Celá aplikace používá jeden existující vzdálený Supabase projekt spravovaný
+autorem aplikace. Uživatel ani vyučující si nevytváří vlastní Supabase projekt,
+lokální databázi ani vlastní kopii dat.
+
+Cloud-only neznamená, že lze databázové přístupové klíče bezpečně zveřejnit
+v GitHub repozitáři. Tajné klíče jsou nastavené pouze v prostředí nasazené
+aplikace, případně je autor poskytne oprávněnému vývojáři soukromě.
 
 ## Hlavní funkce
 
@@ -36,7 +41,18 @@ který již obsahuje databázové schéma a data.
 - Tailwind CSS
 - Zod a React Hook Form
 
-## Spuštění po klonování
+## Použití aplikace
+
+Běžný uživatel otevře nasazenou webovou aplikaci a nemusí nic instalovat ani
+nastavovat. Aplikace automaticky pracuje s centrálními daty ve vzdáleném
+Supabase projektu.
+
+## Spuštění zdrojového kódu po klonování
+
+Tento postup je určen pouze vývojáři nebo vyučujícímu, který chce projekt
+spustit ze zdrojového kódu. Ani v tomto případě nevytváří vlastní Supabase
+projekt a neimportuje žádná data. Připojí aplikaci ke stejnému existujícímu
+cloudovému projektu pomocí přístupových údajů poskytnutých autorem.
 
 ### 1. Instalace závislostí
 
@@ -45,10 +61,10 @@ cd autoskolatest
 npm install
 ```
 
-### 2. Připojení ke vzdálenému Supabase projektu
+### 2. Připojení k existujícímu vzdálenému Supabase projektu
 
 V adresáři `autoskolatest` zkopíruj `.env.example` jako `.env.local` a doplň
-údaje existujícího vzdáleného Supabase projektu:
+údaje centrálního vzdáleného Supabase projektu poskytnuté autorem:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://tvuj-projekt.supabase.co
@@ -56,8 +72,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tvuj_anon_klic
 SUPABASE_SERVICE_ROLE_KEY=tvuj_service_role_klic
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` je tajný serverový klíč. Nesmí být zveřejněn ani
-použit v klientských komponentách.
+Není potřeba vytvářet nový Supabase projekt ani spouštět import otázek.
+`SUPABASE_SERVICE_ROLE_KEY` je tajný serverový klíč. Nesmí být zveřejněn
+v GitHubu ani použit v klientských komponentách.
 
 ### 3. Spuštění aplikace
 
@@ -65,7 +82,7 @@ použit v klientských komponentách.
 npm run dev
 ```
 
-Aplikace po spuštění načte otázky přímo z připojeného Supabase projektu.
+Aplikace po spuštění načte otázky přímo z centrálního Supabase projektu.
 Není potřeba spouštět žádný seed ani importní skript.
 
 ## Databázové migrace
