@@ -1,40 +1,73 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useAuth } from "../components/AuthProvider";
+import { authSchema } from "../lib/authSchema";
+
+function authErrorMessage(error) {
+  switch (error?.code) {
+    case "email_address_not_authorized":
+      return "Potvrzovací e-mail nelze odeslat, protože v Supabase není nastavené vlastní SMTP. Kontaktujte správce aplikace.";
+    case "email_not_confirmed":
+      return "E-mail ještě nebyl potvrzen. Nechte si poslat nový potvrzovací odkaz.";
+    case "over_email_send_rate_limit":
+      return "Bylo odesláno příliš mnoho e-mailů. Počkejte několik minut a zkuste to znovu.";
+    default:
+      return error?.message || "Přihlášení se nezdařilo.";
+  }
+}
 
 export default function AuthPageClient() {
   const router = useRouter();
-  const { user, loading, authError, signIn, signUp } = useAuth();
+  const { user, loading, authError, signIn, signUp, resendConfirmation } = useAuth();
   const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [status, setStatus] = useState("");
   const [formError, setFormError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const email = watch("email");
+
+  const onSubmit = async ({ email: submittedEmail, password, fullName }) => {
     setFormError("");
     setStatus("");
-    setSubmitting(true);
 
     try {
       const response =
         mode === "register"
-          ? await signUp(email, password, fullName)
-          : await signIn(email, password);
+          ? await signUp(submittedEmail, password, fullName)
+          : await signIn(submittedEmail, password);
 
       if (response?.error) {
-        setFormError(response.error.message);
+        if (response.error.code === "email_not_confirmed") {
+          setAwaitingConfirmation(true);
+        }
+        setFormError(authErrorMessage(response.error));
         return;
       }
 
       if (mode === "register" && !response?.data?.session) {
-        setStatus("Registrace proběhla. Pokud je zapnuté potvrzení e-mailu, dokončete ho přes doručenou zprávu.");
+        setAwaitingConfirmation(true);
+        setStatus("Účet byl vytvořen. Pro přihlášení potvrďte e-mail pomocí odkazu ve zprávě. Pokud nepřijde, použijte nové odeslání níže.");
         return;
       }
 
@@ -42,9 +75,40 @@ export default function AuthPageClient() {
       router.refresh();
     } catch (error) {
       setFormError(error.message);
-    } finally {
-      setSubmitting(false);
     }
+  };
+
+  const handleResendConfirmation = async () => {
+    setFormError("");
+    setStatus("");
+    setResending(true);
+
+    try {
+      const { error } = await resendConfirmation(email);
+
+      if (error) {
+        setFormError(authErrorMessage(error));
+        return;
+      }
+
+      setStatus(`Požadavek na nový potvrzovací e-mail pro ${email} byl přijat. Zkontrolujte také spam.`);
+    } catch (error) {
+      setFormError(error.message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const changeMode = (nextMode) => {
+    setMode(nextMode);
+    reset({
+      fullName: "",
+      email,
+      password: "",
+    });
+    setStatus("");
+    setFormError("");
+    setAwaitingConfirmation(false);
   };
 
   if (loading) {
@@ -108,7 +172,7 @@ export default function AuthPageClient() {
           <div className="mb-5 grid grid-cols-2 rounded-lg border border-border bg-muted p-1">
             <button
               type="button"
-              onClick={() => setMode("login")}
+              onClick={() => changeMode("login")}
               className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                 mode === "login"
                   ? "bg-card text-foreground shadow-sm"
@@ -119,7 +183,7 @@ export default function AuthPageClient() {
             </button>
             <button
               type="button"
-              onClick={() => setMode("register")}
+              onClick={() => changeMode("register")}
               className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                 mode === "register"
                   ? "bg-card text-foreground shadow-sm"
@@ -148,18 +212,33 @@ export default function AuthPageClient() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {awaitingConfirmation && email && (
+            <button
+              type="button"
+              onClick={handleResendConfirmation}
+              disabled={resending}
+              className="mb-4 w-full rounded-lg border border-border bg-card px-5 py-3 text-center font-semibold text-foreground shadow-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {resending ? "Odesílám nový odkaz..." : "Poslat potvrzovací e-mail znovu"}
+            </button>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {mode === "register" && (
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-foreground">
                   Jméno
                 </span>
                 <input
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
+                  {...register("fullName")}
                   className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                   placeholder="Nepovinné"
                 />
+                {errors.fullName && (
+                  <span className="block text-sm text-destructive">
+                    {errors.fullName.message}
+                  </span>
+                )}
               </label>
             )}
 
@@ -169,12 +248,19 @@ export default function AuthPageClient() {
               </span>
               <input
                 type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
+                {...register("email", {
+                  onChange: () => {
+                    setAwaitingConfirmation(false);
+                  },
+                })}
                 className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="student@example.com"
               />
+              {errors.email && (
+                <span className="block text-sm text-destructive">
+                  {errors.email.message}
+                </span>
+              )}
             </label>
 
             <label className="block space-y-2">
@@ -183,21 +269,23 @@ export default function AuthPageClient() {
               </span>
               <input
                 type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                minLength={6}
-                required
+                {...register("password")}
                 className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10"
                 placeholder="Alespoň 6 znaků"
               />
+              {errors.password && (
+                <span className="block text-sm text-destructive">
+                  {errors.password.message}
+                </span>
+              )}
             </label>
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={isSubmitting}
               className="w-full rounded-lg bg-primary px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting
+              {isSubmitting
                 ? "Odesílám..."
                 : mode === "register"
                   ? "Vytvořit účet"

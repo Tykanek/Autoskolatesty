@@ -61,6 +61,19 @@ export const testResultSchema = z.object({
   answers: z.array(z.record(z.any())).default([]),
 });
 
+export const questionNoteSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(2, "Název musí mít alespoň 2 znaky")
+    .max(100, "Název může mít maximálně 100 znaků"),
+  note: z
+    .string()
+    .trim()
+    .min(3, "Poznámka musí mít alespoň 3 znaky")
+    .max(10000, "Poznámka může mít maximálně 10 000 znaků"),
+});
+
 export function normalizeQuestionInput(input) {
   const parsed = questionSchema.safeParse(input);
 

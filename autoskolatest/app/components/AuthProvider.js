@@ -134,6 +134,23 @@ export function AuthProvider({ children }) {
           },
         });
       },
+      resendConfirmation: (email) => {
+        if (!client) {
+          return Promise.resolve({
+            error: {
+              message: authError || "Odeslání potvrzovacího e-mailu není dostupné.",
+            },
+          });
+        }
+
+        return client.auth.resend({
+          type: "signup",
+          email,
+          options: {
+            emailRedirectTo: new URL("/auth", window.location.origin).toString(),
+          },
+        });
+      },
       signOut: () => client?.auth.signOut(),
     }),
     [authError, client, loading, role, roleLoading, session, user]

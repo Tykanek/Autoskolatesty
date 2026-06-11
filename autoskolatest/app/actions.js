@@ -1,7 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { questionSchema, testResultSchema } from "./lib/questionSchema";
+import {
+  questionNoteSchema,
+  questionSchema,
+  testResultSchema,
+} from "./lib/questionSchema";
 import { createUserSupabaseClient, supabase } from "./lib/supabase";
 
 function firstValidationMessage(error) {
@@ -410,19 +414,41 @@ export async function getUserQuestionNotes(input = {}) {
 
   const { data, error } = await userSupabase
     .from("user_question_notes")
-    .select("question_id,note,updated_at")
+    .select("question_id,note_title,note,updated_at")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false });
 
-  if (error) {
-    if (isMissingColumnError(error, "user_question_notes")) {
+  if (!error) {
+    return { ok: true, notes: data || [], notesAvailable: true };
+  }
+
+  if (isMissingColumnError(error, "note_title")) {
+    const { data: fallbackData, error: fallbackError } = await userSupabase
+      .from("user_question_notes")
+      .select("question_id,note,updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+
+    if (!fallbackError) {
+      return {
+        ok: true,
+        notes: (fallbackData || []).map((note) => ({
+          ...note,
+          note_title: "Moje poznámka",
+        })),
+        notesAvailable: true,
+        noteTitlesAvailable: false,
+      };
+    }
+
+    if (isMissingColumnError(fallbackError, "user_question_notes")) {
       return { ok: true, notes: [], notesAvailable: false };
     }
 
-    return { ok: false, error: error.message };
+    return { ok: false, error: fallbackError.message };
   }
 
-  return { ok: true, notes: data || [], notesAvailable: true };
+  return { ok: false, error: error.message };
 }
 
 export async function getQuestionNote(input = {}) {
@@ -441,26 +467,50 @@ export async function getQuestionNote(input = {}) {
 
   const { data, error } = await userSupabase
     .from("user_question_notes")
-    .select("note,updated_at")
+    .select("note_title,note,updated_at")
     .eq("user_id", user.id)
     .eq("question_id", questionId)
     .maybeSingle();
 
-  if (error) {
-    if (isMissingColumnError(error, "user_question_notes")) {
+  if (!error) {
+    return {
+      ok: true,
+      title: data?.note_title || "Moje poznámka",
+      note: data?.note || "",
+      updatedAt: data?.updated_at || null,
+      authenticated: true,
+      notesAvailable: true,
+    };
+  }
+
+  if (isMissingColumnError(error, "note_title")) {
+    const { data: fallbackData, error: fallbackError } = await userSupabase
+      .from("user_question_notes")
+      .select("note,updated_at")
+      .eq("user_id", user.id)
+      .eq("question_id", questionId)
+      .maybeSingle();
+
+    if (!fallbackError) {
+      return {
+        ok: true,
+        title: "Moje poznámka",
+        note: fallbackData?.note || "",
+        updatedAt: fallbackData?.updated_at || null,
+        authenticated: true,
+        notesAvailable: true,
+        noteTitlesAvailable: false,
+      };
+    }
+
+    if (isMissingColumnError(fallbackError, "user_question_notes")) {
       return { ok: true, note: "", notesAvailable: false };
     }
 
-    return { ok: false, error: error.message };
+    return { ok: false, error: fallbackError.message };
   }
 
-  return {
-    ok: true,
-    note: data?.note || "",
-    updatedAt: data?.updated_at || null,
-    authenticated: true,
-    notesAvailable: true,
-  };
+  return { ok: false, error: error.message };
 }
 
 export async function saveQuestionNote(input = {}) {
@@ -475,23 +525,42 @@ export async function saveQuestionNote(input = {}) {
     return { ok: false, error: "ID otázky chybí nebo není platné." };
   }
 
-  const note = String(input.note || "").trim().slice(0, 10000);
+  const parsed = questionNoteSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, error: firstValidationMessage(parsed.error) };
+  }
+
   const now = new Date().toISOString();
   const userSupabase = createUserSupabaseClient(input.access_token);
 
-  const { data, error } = await userSupabase
+  const noteRow = {
+    user_id: user.id,
+    question_id: questionId,
+    note_title: parsed.data.title,
+    note: parsed.data.note,
+    updated_at: now,
+  };
+
+  let { data, error } = await userSupabase
     .from("user_question_notes")
-    .upsert(
-      {
-        user_id: user.id,
-        question_id: questionId,
-        note,
-        updated_at: now,
-      },
-      { onConflict: "user_id,question_id" }
-    )
-    .select("note,updated_at")
+    .upsert(noteRow, { onConflict: "user_id,question_id" })
+    .select("note_title,note,updated_at")
     .single();
+
+  if (error && isMissingColumnError(error, "note_title")) {
+    const { note_title: _noteTitle, ...fallbackRow } = noteRow;
+    const fallbackResult = await userSupabase
+      .from("user_question_notes")
+      .upsert(fallbackRow, { onConflict: "user_id,question_id" })
+      .select("note,updated_at")
+      .single();
+
+    data = fallbackResult.data
+      ? { ...fallbackResult.data, note_title: parsed.data.title }
+      : null;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     if (isMissingColumnError(error, "user_question_notes")) {
@@ -509,6 +578,7 @@ export async function saveQuestionNote(input = {}) {
 
   return {
     ok: true,
+    title: data.note_title,
     note: data.note,
     updatedAt: data.updated_at,
   };
