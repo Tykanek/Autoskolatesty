@@ -38,6 +38,8 @@ prostředí aplikace.
 - Supabase PostgreSQL a Supabase Auth
 - Tailwind CSS
 - Zod a React Hook Form
+- Vercel pro produkční nasazení aplikace
+- Brevo jako SMTP služba pro potvrzovací e-maily
 
 ## Splnění zadání
 
@@ -98,6 +100,18 @@ npm run dev
 
 Aplikace po spuštění načte data přímo z nastaveného Supabase projektu.
 
+## Produkční nasazení
+
+Aplikace je nasazená na platformě Vercel. V nastavení Vercel projektu je jako
+Root Directory nastavená složka `autoskolatest` a v `Settings > Environment
+Variables` jsou uložené stejné Supabase proměnné jako v lokálním `.env.local`.
+Po každém sloučení změn do větve `main` Vercel automaticky vytvoří nové
+produkční nasazení.
+
+Produkční adresu z Vercelu je potřeba přidat také v Supabase Dashboardu do
+`Authentication > URL Configuration` jako `Site URL` a mezi povolené redirect
+URL. Díky tomu funguje návrat uživatele po potvrzení e-mailu.
+
 ## Databázové migrace
 
 Složka `autoskolatest/supabase/migrations` obsahuje kompletní databázové schéma,
@@ -136,12 +150,15 @@ where id = (
 
 ## Potvrzovací e-maily
 
-Při zapnutém potvrzení e-mailu zajišťuje odesílání zpráv Supabase Auth.
-Výchozí SMTP služba Supabase je určená pouze pro testování a doručuje zprávy
-jen na adresy členů týmu projektu. Pro registraci běžných uživatelů je nutné
-v Supabase Dashboardu otevřít `Authentication > SMTP Settings` a nastavit vlastní
-SMTP službu. Po nastavení je vhodné ověřit také povolené redirect URL v
-`Authentication > URL Configuration`.
+Při zapnutém potvrzení e-mailu zajišťuje autentizaci Supabase Auth a samotné
+odesílání zpráv probíhá přes SMTP službu Brevo. Přístupové údaje z Brevo jsou
+nastavené v Supabase Dashboardu v `Authentication > SMTP Settings`; SMTP heslo
+není uložené v repozitáři ani ve zdrojovém kódu.
+
+V Supabase je zároveň potřeba povolit produkční adresu aplikace z Vercelu v
+`Authentication > URL Configuration`. Výchozí SMTP služba Supabase je vhodná
+pouze pro omezené testování, proto projekt pro registraci běžných uživatelů
+používá Brevo.
 
 ## Ověření projektu
 
