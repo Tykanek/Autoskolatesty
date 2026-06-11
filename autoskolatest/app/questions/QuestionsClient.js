@@ -43,7 +43,10 @@ export default function QuestionsClient({ questions }) {
 
       const nextNotes = (response.notes || []).reduce((notes, item) => {
         if (item.note) {
-          notes[String(item.question_id)] = item.note;
+          notes[String(item.question_id)] = {
+            title: item.note_title || "Moje poznámka",
+            note: item.note,
+          };
         }
 
         return notes;
@@ -145,9 +148,9 @@ export default function QuestionsClient({ questions }) {
               {notesByQuestionId[String(question.id)] && (
                 <p className="mt-3 rounded-lg border border-border bg-muted p-3 text-xs leading-5 text-muted-foreground">
                   <span className="font-semibold text-foreground">
-                    Poznámka:
+                    Poznámka ({notesByQuestionId[String(question.id)].title}):
                   </span>{" "}
-                  {notePreview(notesByQuestionId[String(question.id)])}
+                  {notePreview(notesByQuestionId[String(question.id)].note)}
                 </p>
               )}
 
@@ -210,9 +213,9 @@ export default function QuestionsClient({ questions }) {
                     {notesByQuestionId[String(question.id)] && (
                       <p className="mt-2 rounded-lg border border-border bg-muted p-2 text-xs leading-5 text-muted-foreground">
                         <span className="font-semibold text-foreground">
-                          Poznámka:
+                          Poznámka ({notesByQuestionId[String(question.id)].title}):
                         </span>{" "}
-                        {notePreview(notesByQuestionId[String(question.id)])}
+                        {notePreview(notesByQuestionId[String(question.id)].note)}
                       </p>
                     )}
                   </td>
